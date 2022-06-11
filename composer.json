@@ -2,6 +2,9 @@
     "name": "chunghsien/chopin",
     "type": "project",
     "license": "BSD 3-Clause License",
+    "require":{
+        "php": "^7.4 || ~8.0.0 || ~8.1.0",
+    },
     "autoload": {
         "psr-4": {
             "Chopin\\Composer\\": "chopin-composer/src/",
