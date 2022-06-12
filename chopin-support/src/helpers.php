@@ -8,7 +8,6 @@ use Laminas\ServiceManager\ServiceManager;
 use Intervention\Image\ImageManagerStatic as Image;
 use Chopin\LaminasDb\TableGateway\AbstractTableGateway;
 use Laminas\I18n\Translator\Translator;
-use Laminas\Cache\StorageFactory;
 use Laminas\Cache\Storage\Adapter\Filesystem;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -26,28 +25,7 @@ if (! function_exists('config') && is_file('config/config.php')) {
 
     function getAppEnvConstant()
     {
-        if (! defined('APP_ENV')) {
-            $env = require './config/env.php';
-            if (PHP_SAPI === 'cli') {
-                if (! defined('APP_ENV')) {
-                    define('APP_ENV', $env["cli"]);
-                }
-            } else {
-                $serverAddr = isset($_SERVER['SERVER_ADDR']) ? $_SERVER['SERVER_ADDR'] : '127.0.0.1';
-                if (empty($env[$serverAddr])) {
-                    if (! defined('APP_ENV')) {
-                        define('APP_ENV', 'production');
-                        define('ASSETS_LAST_MODI', filemtime(__FILE__));
-                    }
-                } else {
-                    if (! defined('APP_ENV')) {
-                        define('APP_ENV', $env[$serverAddr]);
-                        define('ASSETS_LAST_MODI', time());
-                    }
-                }
-            }
-        }
-        return APP_ENV;
+        return $_ENV["APP_ENV"];
     }
 
     function i18nStaticTranslator($text, $textDomain = 'default')
