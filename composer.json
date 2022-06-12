@@ -6,6 +6,9 @@
     "php": "^7.4 || ~8.0.0 || ~8.1.0"
   },
   "autoload": {
+    "files": [
+      "chopin-support/src/helpers.php"
+    ],
     "psr-4": {
       "Chopin\\Composer\\": "chopin-composer/src/",
       "Chopin\\Console\\": "chopin-console/src/",
