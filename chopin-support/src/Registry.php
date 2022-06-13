@@ -105,7 +105,6 @@ class Registry extends \ArrayObject
         $instance = self::getInstance();
         if(isset($instance[$index])) {
             return $instance[$index];
-            //debug($index);
         }
         if ($instance->offsetExists($index)) {
             return $instance->offsetGet($index);

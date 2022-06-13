@@ -306,7 +306,7 @@ if (! function_exists('config') && is_file('config/config.php')) {
         $serviceManager = Registry::get(ServiceManager::class);
         $config = $serviceManager->get('config');
         $keyArr = explode('.', $key);
-        if (preg_match('/^production/i', APP_ENV) && ! is_file('storage/cache/config-cache.dat')) {
+        if (preg_match('/^production/i', $_ENV["APP_ENV"]) && ! is_file('storage/cache/config-cache.dat')) {
             file_put_contents('storage/cache/config-cache.dat', serialize($config));
         }
         if (preg_match('/\*$/', $key)) {
