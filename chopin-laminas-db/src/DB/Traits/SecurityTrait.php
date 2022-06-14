@@ -223,7 +223,7 @@ trait SecurityTrait
             }
         } else {
             foreach ($encryptionColumns as $column) {
-                if (isset($data->{$column})) {
+                if (isset($data->{$column}) && $data->{$column}) {
                     $value = $data->{$column};
                     $value = $this->aesCrypter->decrypt($value);
                     $data->{$column} = $value;
