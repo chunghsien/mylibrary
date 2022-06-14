@@ -611,7 +611,7 @@ class EcpayPayment extends AbstractPayment
             $config = $this->systemSettings["ecpay"];
             $config = str_replace('Chopin\\Store\\Logistics\\', 'Chopin\\\\Store\\\\Logistics\\\\', $config);
             $config = json_decode($config, true);
-            if (APP_ENV === 'development') {
+            if ($_ENV["APP_ENV"] === 'development') {
                 if (! $this->devConfig) {
                     $this->devConfig = config('third_party_service.logistics.ecpay');
                 }

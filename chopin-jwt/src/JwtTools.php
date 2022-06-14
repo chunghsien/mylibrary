@@ -81,7 +81,7 @@ abstract class JwtTools
         if ($payload->exp < $iat) {
             return ["status" => false, "msg" => "exp fail"];
         }
-        if(APP_ENV == "production") {
+        if($_ENV["APP_ENV"] == "production") {
             if($payload->exp > $iat + (60*10)) {
                 return ["status" => false, "msg" => "exp fail"];
             }

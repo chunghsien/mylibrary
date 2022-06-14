@@ -193,7 +193,7 @@ class NewwebpayService extends ThirdPartyPaymentService
         $hashIV = $config['hash_iv'];
         $tradInfo = $this->createMpgAesEncrypt($tradSource, $hashKey, $hashIV);
         $matcher = [];
-        preg_match('/^production/i', APP_ENV, $matcher);
+        preg_match('/^production/i', $_ENV["APP_ENV"], $matcher);
         if ($matcher[0] == self::PRODUCTION) {
             $action = 'https://core.newebpay.com/MPG/mpg_gateway';
         } else {

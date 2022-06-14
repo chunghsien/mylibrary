@@ -528,7 +528,7 @@ class OrderTableGateway extends AbstractTableGateway
 
     public function buildOrderSerial($prefix = 'PP')
     {
-        if (APP_ENV != 'production') {
+        if ($_ENV["APP_ENV"] != 'production') {
             $prefix = "LL";
         }
         $serial = date("ymd");

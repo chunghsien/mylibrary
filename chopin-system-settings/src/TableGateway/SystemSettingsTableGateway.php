@@ -177,8 +177,8 @@ class SystemSettingsTableGateway extends AbstractTableGateway
         if (isset($data['children'])) {
             $toConfig = [];
             foreach ($data['children'] as &$c) {
-                $c['input_type'] = json_decode($c['input_type'], true);
-
+                $inputType = $c['input_type'] ? $c['input_type'] : '';
+                $c['input_type'] = json_decode($inputType, true);
                 if (isset($c['input_type']['0'])) {
                     $params = $c['input_type']['0'];
 

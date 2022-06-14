@@ -40,7 +40,7 @@ if (! function_exists('config') && is_file('config/config.php')) {
             }
             $allMessages = $translator->getAllMessages($textDomain, $locale);
 
-            if (APP_ENV === 'production') {
+            if ($_ENV["APP_ENV"] === 'production') {
                 $cache = Registry::get(\Laminas\Cache\Storage\StorageInterface::class);
                 if ($cache instanceof Filesystem) {
                     $options = $cache->getOptions();
@@ -293,7 +293,7 @@ if (! function_exists('config') && is_file('config/config.php')) {
     function config($key = null)
     {
         if (is_null($key)) {
-            if (preg_match('/^production/i', APP_ENV) && is_file('storage/cache/config-cache.dat')) {
+            if (preg_match('/^production/i', $_ENV["APP_ENV"]) && is_file('storage/cache/config-cache.dat')) {
                 return unserialize(file_get_contents('storage/cache/config-cache.dat'));
             } else {
                 return require 'config/config.php';

@@ -183,7 +183,7 @@ class TspgCreditPayment extends AbstractPayment
             $send["params"]["result_url"] = $resultUrl;
         }
         $apiUrl = self::TEST_URL;
-        if (APP_ENV == 'production') {
+        if ($_ENV["APP_ENV"] == 'production') {
             $apiUrl = self::PRODUCTION_URL;
         }
         $ch = curl_init($apiUrl);

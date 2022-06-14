@@ -18,7 +18,7 @@ class Translator extends I18nTranslator implements I18nTranslatorInterface, Tran
     public function getAllMessages($textDomain = null, $locale = null)
     {
         if (is_null($textDomain) && is_null($locale)) {
-            if (preg_match('/^production/i', APP_ENV) && is_file('storage/cache/translator_package.dat')) {
+            if (preg_match('/^production/i', $_ENV["APP_ENV"]) && is_file('storage/cache/translator_package.dat')) {
                 $translator_package = file_get_contents('storage/cache/translator_package.dat');
                 return unserialize($translator_package);
             } else {

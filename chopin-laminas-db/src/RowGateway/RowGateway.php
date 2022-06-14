@@ -59,7 +59,7 @@ class RowGateway extends LaminasRowGateway implements \Serializable, \JsonSerial
      * {@inheritdoc}
      * @see \JsonSerializable::jsonSerialize()
      */
-    # [\ReturnTypeWillChange]
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return json_encode($this->toArray());

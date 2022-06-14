@@ -163,7 +163,7 @@ abstract class AbstractAction implements RequestHandlerInterface
      */
     protected function verifyCsrf(ServerRequestInterface $request)
     {
-        if (APP_ENV == 'production') {
+        if ($_ENV["APP_ENV"] == 'production') {
             $server = $request->getServerParams();
             if (isset($server['HTTP_ORIGIN']) && preg_match('/localhost:\d+/', $server['HTTP_ORIGIN'])) {
                 return true;

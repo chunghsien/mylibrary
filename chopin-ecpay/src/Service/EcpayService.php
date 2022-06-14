@@ -157,7 +157,7 @@ class EcpayService /* extends ThirdPartyPaymentService */
             logger()->warning(__CLASS__ . "::" . $type . ",驗證失敗: " . json_encode($post, JSON_UNESCAPED_UNICODE));
             return [];
         }
-        if (APP_ENV == 'development') {
+        if ($_ENV["APP_ENV"] == 'development') {
             logger()->info(__CLASS__ . "::" . $type . ": " . json_encode($feedback, JSON_UNESCAPED_UNICODE));
         }
         if ($feedback["RtnCode"] == 1) {
@@ -173,7 +173,7 @@ class EcpayService /* extends ThirdPartyPaymentService */
     public function buildMpgForm(ServerRequestInterface $request, $data)
     {
         $matcher = [];
-        preg_match('/^production/i', APP_ENV, $matcher);
+        preg_match('/^production/i', $_ENV["APP_ENV"], $matcher);
         $version = self::VERSION;
         if ($this->config["merchant_id"] !== "2000132") {
             $serviceURL = "https://payment.ecpay.com.tw/Cashier/AioCheckOut/V{$version}";
@@ -360,7 +360,7 @@ class EcpayService /* extends ThirdPartyPaymentService */
             $obj->Send["OrderResultURL"] = "{$protocol}{$serverName}{$orderResultUri}?serial={$serial}";
         }
         $html = $obj->CheckOutString();
-        if (APP_ENV == 'development') {
+        if ($_ENV["APP_ENV"] == 'development') {
             logger()->info($html);
         }
 

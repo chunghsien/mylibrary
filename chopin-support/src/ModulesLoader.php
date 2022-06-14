@@ -71,7 +71,7 @@ abstract class ModulesLoader
     {
         $osDir = str_replace('/', DIRECTORY_SEPARATOR, $dir);
         if (! is_dir($osDir)) {
-            $osDir = 'vendor/chunghsien';
+            $osDir = 'vendor/chunghsien/chopin';
             $osDir = str_replace('/', DIRECTORY_SEPARATOR, $osDir);
         }
 
@@ -81,7 +81,6 @@ abstract class ModulesLoader
         $configProviders = [];
         foreach ($osDirIterator as $dirpath) {
             $filename = $dirpath->getFilename();
-
             if ($filename != '.' && $filename != '..') {
                 if ($dirpath->isDir()) {
                     $module = str_replace($osDir . DIRECTORY_SEPARATOR, '', $dirpath->getPathname());
@@ -96,7 +95,6 @@ abstract class ModulesLoader
             }
         }
         unset($osDirIterator);
-
         return $configProviders;
     }
 

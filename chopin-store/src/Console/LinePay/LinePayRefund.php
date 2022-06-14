@@ -41,7 +41,7 @@ class LinePayRefund extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        if (APP_ENV != "development") {
+        if ($_ENV["APP_ENV"] != "development") {
             $output->writeln("<error>僅能在開發環境下執行</error>");
             return 0;
             //exit();
