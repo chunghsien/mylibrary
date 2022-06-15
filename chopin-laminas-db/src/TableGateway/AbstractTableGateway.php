@@ -6,7 +6,6 @@ use Laminas\Db\TableGateway\TableGateway as LaminasTableGateway;
 use Laminas\Db\TableGateway\Feature\RowGatewayFeature;
 use Chopin\LaminasDb\ColumnCacheBuilder;
 use Laminas\Filter\Word\UnderscoreToCamelCase;
-use Laminas\Code\Reflection\FileReflection;
 use Chopin\LaminasDb\DB;
 use Chopin\LaminasDb\RowGateway\RowGateway;
 use Laminas\Db\Sql\Predicate\Predicate;
@@ -79,11 +78,12 @@ abstract class AbstractTableGateway extends LaminasTableGateway
             $classname = str_replace(self::$prefixTable, '', $classOrTable);
             $tailClassname = ucfirst($filter->filter($classOrTable)) . 'TableGateway';
             $tailFilename = $tailClassname . '.php';
-            $globs = glob('src/**/**/src/TableGateway/' . $tailFilename);
+            $globs = glob('vendor/chunghsien/chopin/**/src/TableGateway/' . $tailFilename);
             if ($globs && count($globs) == 1) {
+                
                 $filename = $globs[0];
-                $fileGenerator = new FileReflection($filename, true);
-                $classname = $fileGenerator->getClass()->name;
+                $classname = self::filenameToClass($filename);
+                //$classname = $fileGenerator->getClass()->name;
                 if (class_exists($classname)) {
                     $reflectionClass = new \ReflectionClass($classname);
                     return $reflectionClass->newInstance($adapter);
@@ -92,6 +92,23 @@ abstract class AbstractTableGateway extends LaminasTableGateway
             }
             throw new \ErrorException($classname . ': 沒這個東西。');
         }
+    }
+    
+    private static function filenameToClass($filename) {
+        $classname = str_replace('/src', '', $filename);
+        $classname = str_replace('vendor/chunghsien/chopin/', '', $classname);
+        $classname = explode('-', $classname);
+        foreach ($classname as &$c) {
+            $c = ucfirst($c);
+        }
+        /*
+        $classname[0] = ucfirst($classname[0]);
+        $classname[1] = ucfirst($classname[1]);
+        */
+        $classname = implode('\\', $classname);
+        $classname = str_replace('/', '\\', $classname);
+        $classname = preg_replace('/\.php$/', '', $classname);
+        return $classname;
     }
 
     protected function setColumns($file)

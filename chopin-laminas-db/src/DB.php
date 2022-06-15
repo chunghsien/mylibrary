@@ -325,11 +325,6 @@ class DB
                 'items' => (array) $paginator->getCurrentItems(),
                 'pages' => $paginator->getPages()
             ];
-            /*
-             * if($keys) {
-             * $this->setCache($keys['key'], $result);
-             * }
-             */
             $tableRawState =  $select->getRawState('table');
             if(is_array($tableRawState)) {
                 $tablename = array_keys($tableRawState)[0];
