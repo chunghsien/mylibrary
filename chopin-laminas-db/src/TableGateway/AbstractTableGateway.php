@@ -15,6 +15,7 @@ use Chopin\LaminasDb\ResultSet\ResultSet;
 use Chopin\LaminasDb\TableGateway\Feature\CacheTableFeature;
 use Chopin\LaminasDb\DB\Traits\SecurityTrait;
 use Chopin\LaminasDb\DB\Traits\CacheTrait;
+use Laminas\Filter\Word\DashToCamelCase;
 
 abstract class AbstractTableGateway extends LaminasTableGateway
 {
@@ -80,7 +81,6 @@ abstract class AbstractTableGateway extends LaminasTableGateway
             $tailFilename = $tailClassname . '.php';
             $globs = glob('vendor/chunghsien/chopin/**/src/TableGateway/' . $tailFilename);
             if ($globs && count($globs) == 1) {
-                
                 $filename = $globs[0];
                 $classname = self::filenameToClass($filename);
                 //$classname = $fileGenerator->getClass()->name;
@@ -90,24 +90,25 @@ abstract class AbstractTableGateway extends LaminasTableGateway
                 }
                 // return self::newInstance($classOrTable, $adapter);
             }
-            throw new \ErrorException($classname . ': 沒這個東西。');
+            throw new \ErrorException($classname . ': 類別名稱不存在。');
         }
     }
     
     private static function filenameToClass($filename) {
         $classname = str_replace('/src', '', $filename);
         $classname = str_replace('vendor/chunghsien/chopin/', '', $classname);
-        $classname = explode('-', $classname);
+        $classname = explode('chopin-', $classname);
         foreach ($classname as &$c) {
             $c = ucfirst($c);
         }
-        /*
         $classname[0] = ucfirst($classname[0]);
         $classname[1] = ucfirst($classname[1]);
-        */
+        $filter = new DashToCamelCase();
+        $classname[1] = $filter->filter($classname[1]);
         $classname = implode('\\', $classname);
         $classname = str_replace('/', '\\', $classname);
         $classname = preg_replace('/\.php$/', '', $classname);
+        $classname = "Chopin".$classname;
         return $classname;
     }
 

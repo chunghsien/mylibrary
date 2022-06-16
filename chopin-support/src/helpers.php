@@ -417,12 +417,14 @@ if (! function_exists('config') && is_file('config/config.php')) {
             }
         }
         $return = (defined('LOCALHOST_NODEJS_USE') || $http_x_requested_with == 'xmlhttprequest');
+        /*
         if($routeName == 'admin.elfinder') {
             logger()->info(json_encode([$serverParams["HTTP_REFERER"],  $serverParams["HTTP_HOST"]]));
             if (false !== strpos($serverParams["HTTP_REFERER"], $serverParams["HTTP_HOST"]) ) {
                 $return = true;
             }
         }
+        */
         if (!$return && $request) {
             $http_x_requested_with = $request->getHeader('HTTP_X_REQUESTED_WITH');
             if ($http_x_requested_with && is_array($http_x_requested_with) && strtolower($http_x_requested_with[0]) == "xmlhttprequest") {

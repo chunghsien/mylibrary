@@ -34,7 +34,9 @@ abstract class ModulesLoader
 
             if (strtolower($skeleton) == 'laminasframework') {
                 $configProviderClassName = $classname . "\\ConfigProvider";
-
+                if(strtolower($configProviderClassName) == "app\configprovider") {
+                    continue;
+                }
                 if ($prefix) {
                     $configProviderClassName = $prefix . '\\' . $configProviderClassName;
                 }
