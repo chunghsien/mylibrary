@@ -20,7 +20,7 @@ abstract class ColumnCacheBuilder
 
         // AbstractTableGateway::$prefixTable
         $tail_table = preg_replace('/^' . AbstractTableGateway::$prefixTable . '/', '', $table);
-        $baseFolder = dirname(dirname(dirname(dirname(__DIR__)))) . '/storage/database/' . $dbname . '/' . $tail_table;
+        $baseFolder = './storage/database/' . $dbname . '/' . $tail_table;
         if (! is_dir($baseFolder)) {
             mkdir($baseFolder, 0755, true);
         }

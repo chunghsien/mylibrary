@@ -396,13 +396,17 @@ if (! function_exists('config') && is_file('config/config.php')) {
              */
             $route = $request->getAttribute(\Mezzio\Router\RouteResult::class);
             $routeName = $route->getMatchedRouteName();
-            logger()->info($routeName);
+            //logger()->info($routeName);
             $serverParams = $request->getServerParams();
-        }
-        if ((!$http_x_requested_with && $request instanceof ServerRequestInterface) ) {
-            
+            if(!$http_x_requested_with) {
+                $http_x_requested_with = $request->getHeader('http-x-requested-with');
+                if($http_x_requested_with) {
+                    $http_x_requested_with = $http_x_requested_with[0];
+                }else {
+                    $http_x_requested_with = null;
+                }
+            }
             if (isset($serverParams["HTTP_REFERER"])) {
-                //logger()->info(json_encode($serverParams));
                 if (false !== strpos($serverParams["HTTP_REFERER"], $serverParams["HTTP_HOST"]) ) {
                     $header = $request->getHeader('content-type');
                     if($header && $header[0] == 'application/json') {
@@ -415,29 +419,13 @@ if (! function_exists('config') && is_file('config/config.php')) {
                     }
                 }
             }
-        }
-        $return = (defined('LOCALHOST_NODEJS_USE') || $http_x_requested_with == 'xmlhttprequest');
-        /*
-        if($routeName == 'admin.elfinder') {
-            logger()->info(json_encode([$serverParams["HTTP_REFERER"],  $serverParams["HTTP_HOST"]]));
-            if (false !== strpos($serverParams["HTTP_REFERER"], $serverParams["HTTP_HOST"]) ) {
-                $return = true;
-            }
-        }
-        */
-        if (!$return && $request) {
-            $http_x_requested_with = $request->getHeader('HTTP_X_REQUESTED_WITH');
-            if ($http_x_requested_with && is_array($http_x_requested_with) && strtolower($http_x_requested_with[0]) == "xmlhttprequest") {
-                return true;
-            }
-            $accept = $request->getHeader('accept')[0];
-            $serverPaerams = $request->getServerParams();
-            if (preg_match('/^application\/json/i', $accept)) {
-                if (false !== strpos($serverPaerams["HTTP_REFERER"], $serverPaerams["SERVER_NAME"])) {
+            if(preg_match('/^(127\.0\.0\.1)|(192\.168\.\d{1,3}.\d{1,3})/', $serverParams["REMOTE_ADDR"])) {
+                if($http_x_requested_with == 'xmlhttprequest') {
                     return true;
                 }
             }
         }
+        $return = (defined('LOCALHOST_NODEJS_USE') || $http_x_requested_with == 'xmlhttprequest');
         return $return;
     }
 

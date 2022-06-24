@@ -14,6 +14,8 @@ use Laminas\Paginator\Paginator;
 use Chopin\Documents\TableGateway\LayoutZonesTableGateway;
 use Laminas\Db\Sql\Join;
 use Chopin\LaminasDb\DB;
+use Chopin\Support\Registry;
+use Chopin\LanguageHasLocale\TableGateway\LanguageHasLocaleTableGateway;
 
 class ProductsTableGateway extends AbstractTableGateway
 {
@@ -30,9 +32,18 @@ class ProductsTableGateway extends AbstractTableGateway
     protected $table = 'products';
 
     private $product_type_options = [
-        ["value" => 1, "label" => "product_type_options_1"],
-        ["value" => 2, "label" => "product_type_options_2"],
-        ["value" => 4, "label" => "product_type_options_4"],
+        [
+            "value" => 1,
+            "label" => "product_type_options_1"
+        ],
+        [
+            "value" => 2,
+            "label" => "product_type_options_2"
+        ],
+        [
+            "value" => 4,
+            "label" => "product_type_options_4"
+        ]
     ];
 
     protected $stockStatusOptions = [
@@ -45,9 +56,33 @@ class ProductsTableGateway extends AbstractTableGateway
         20 => "stock_status_out_off_stock" // 缺貨
     ];
 
-    public function getTypeOptions()
+    public function getTypeOptions($notValueOne = false, $id = null)
     {
-        return $this->product_type_options;
+        $options = $this->product_type_options;
+        if ($notValueOne) {
+            $options = array_filter($this->product_type_options, function ($item) {
+                return $item["value"] != 1;
+            });
+        }
+        $options = array_values($options);
+        if($id) {
+            $row = $this->select(["id" => $id])->current();
+            if($row) {
+                $languageHasLocaleTableGateway = new LanguageHasLocaleTableGateway($this->adapter);
+                $languageHasLocaleRow = $languageHasLocaleTableGateway->select(["language_id" => $row->language_id, "locale_id" => $row->locale_id])->current();
+                /**
+                 * @var \Laminas\I18n\Translator\Translator $laminasTranslator
+                 */
+                $laminasTranslator = Registry::get('laminasTranslator');
+                $laminasTranslator->addTranslationFile('phpArray', PROJECT_DIR.'/resources/languages', '%s/translation.php');
+                $locale = $languageHasLocaleRow->code;
+                $laminasTranslator->setLocale($locale);
+                foreach ($options as &$item) {
+                    $item["label"] = $laminasTranslator->translate($item["label"]);
+                }
+            }
+        }
+        return $options;
     }
 
     public function getTabs(ServerRequestInterface $request, $tabs, $orders, $extraWhere = [])

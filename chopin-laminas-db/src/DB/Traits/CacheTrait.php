@@ -5,7 +5,7 @@ namespace Chopin\LaminasDb\DB\Traits;
 use Laminas\Cache\Storage\Adapter\AbstractAdapter;
 use Laminas\Cache\Storage\Adapter\Filesystem;
 use Laminas\Db\ResultSet\ResultSetInterface;
-use Laminas\Cache\StorageFactory;
+//use Laminas\Cache\StorageFactory;
 use Chopin\SystemSettings\TableGateway\DbCacheMapperTableGateway;
 use Psr\Http\Message\ServerRequestInterface;
 use Laminas\Cache\Storage\StorageInterface;

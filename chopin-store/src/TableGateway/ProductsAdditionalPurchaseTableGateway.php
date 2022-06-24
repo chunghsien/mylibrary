@@ -13,4 +13,8 @@ class ProductsAdditionalPurchaseTableGateway extends AbstractTableGateway
      * @inheritdoc
      */
     protected $table = 'product_additional_purchase';
+    
+    public function batchInsert($set) {
+        
+    }
 }

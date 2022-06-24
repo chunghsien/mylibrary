@@ -2,6 +2,7 @@
 namespace Chopin\Jwt;
 
 use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
 abstract class JwtTools
 {
@@ -60,9 +61,7 @@ abstract class JwtTools
             $jwt = $payload;
             $key = config('encryption.jwt_key');
             $alg = config('encryption.jwt_alg');
-            $payload = JWT::decode($jwt, $key, [
-                $alg
-            ]);
+            $payload = JWT::decode($jwt, new Key($key, $alg));
         }
 
         $iat = strtotime('now');
@@ -72,20 +71,35 @@ abstract class JwtTools
 
         $iss = isset($_SERVER["SERVER_PORT"]) == "443" ? 'https://' . $_SERVER["SERVER_NAME"] : 'http://' . $_SERVER["SERVER_NAME"];
         if ($payload->iss != $iss) {
-            return ["status" => false, "msg" => "issuer fail"];
+            return [
+                "status" => false,
+                "msg" => "issuer fail"
+            ];
         }
 
         if ($payload->nbf > $iat) {
-            return ["status" => false, "msg" => "not before"];
+            return [
+                "status" => false,
+                "msg" => "not before"
+            ];
         }
         if ($payload->exp < $iat) {
-            return ["status" => false, "msg" => "exp fail"];
+            return [
+                "status" => false,
+                "msg" => "exp fail"
+            ];
         }
-        if($_ENV["APP_ENV"] == "production") {
-            if($payload->exp > $iat + (60*10)) {
-                return ["status" => false, "msg" => "exp fail"];
+        if ($_ENV["APP_ENV"] == "production") {
+            if ($payload->exp > $iat + (60 * 10)) {
+                return [
+                    "status" => false,
+                    "msg" => "exp fail"
+                ];
             }
         }
-        return ["status" => true, "msg" => "success"];
+        return [
+            "status" => true,
+            "msg" => "success"
+        ];
     }
 }

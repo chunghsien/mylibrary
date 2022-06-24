@@ -249,10 +249,10 @@ class ProductsCombinationTableGateway extends AbstractTableGateway
         return $row->toArray();
     }
 
-    public function getOptionsContainer($language_id, $locale_id)
+    public function getOptionsContainer($language_id, $locale_id, $productInclude=false)
     {
         return [
-            "products" => $this->getProductsOptions($language_id, $locale_id),
+            "products" => $productInclude ? $this->getProductsOptions($language_id, $locale_id) : [],
             "option1" => $this->getOption1Options($language_id, $locale_id),
             "option2" => $this->getOption2Options($language_id, $locale_id),
             "option3" => $this->getOption3Options($language_id, $locale_id),

@@ -149,10 +149,8 @@ abstract class AbstractTableGateway extends LaminasTableGateway
         parent::initialize();
 
         if ($this->table) {
-            $baseDir = dirname(dirname(dirname(dirname(dirname(__DIR__)))));
-            $schemaDir = $baseDir . '/storage/database/' . $this->adapter->getCurrentSchema();
+            $schemaDir = './storage/database/' . $this->adapter->getCurrentSchema();
             $datDir = $schemaDir . '/' . preg_replace('/^' . self::$prefixTable . '/', '', $this->table);
-
             if (! is_dir($datDir)) {
                 mkdir($datDir, 0755, true);
             }
@@ -400,8 +398,6 @@ abstract class AbstractTableGateway extends LaminasTableGateway
      */
     public function getOptions($valueField = 'id', $lableField = 'name', $dataAttrs = [], $predicateParams = [], $limit = null)
     {
-        //
-
         // $this->sql->select()->where->isNull
         if (is_string($valueField)) {
             $columns = array_merge([
@@ -434,7 +430,6 @@ abstract class AbstractTableGateway extends LaminasTableGateway
         if ($limit) {
             $scripts['limit'] = $limit;
         }
-
         $resultSet = DB::selectFactory($scripts);
         return $this->buildOptionsData($valueField, $lableField, $resultSet, $dataAttrs);
     }
