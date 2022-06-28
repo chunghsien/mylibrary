@@ -32,6 +32,7 @@ trait SecurityTrait
         'cellphone',
         'invoice_phone',
         'tel',
+		'fax',
         'telphone',
         'address', //住址
         'full_address', //住址
