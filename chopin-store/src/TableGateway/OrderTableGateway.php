@@ -127,63 +127,6 @@ class OrderTableGateway extends AbstractTableGateway
     public function __construct(\Laminas\Db\Adapter\Adapter $adapter, $request = null)
     {
         parent::__construct($adapter);
-        $this->aes_key = config('encryption.aes_key');
-        $this->subSelectColumns = [
-            'id' => 'id',
-            'member_id',
-            'logistics_global_id',
-            'payment_id',
-            "merchant_payment",
-            'language_id',
-            'locale_id',
-            'serial',
-            'invoice_no',
-            'invoice_invalid',
-            // 'invoice_phone' => new Expression("CAST(AES_DECRYPT(`invoice_phone`, ?) AS CHAR)"),
-            'business_no',
-            'business_title',
-            'subtotal',
-            'trad_fee',
-            'discount',
-            'total',
-            'first_name' => new Expression("CAST(AES_DECRYPT(`first_name`, ?) AS CHAR)", [
-                $this->aes_key
-            ]),
-            'last_name' => new Expression("CAST(AES_DECRYPT(`last_name`, ?) AS CHAR)", [
-                $this->aes_key
-            ]),
-            'fullname' => new Expression("CAST(AES_DECRYPT(`fullname`, ?) AS CHAR)", [
-                $this->aes_key
-            ]),
-            'email' => new Expression("CAST(AES_DECRYPT(`email`, ?) AS CHAR)", [
-                $this->aes_key
-            ]),
-            'phone' => new Expression("CAST(AES_DECRYPT(`phone`, ?) AS CHAR)", [
-                $this->aes_key
-            ]),
-            'cellphone' => new Expression("CAST(AES_DECRYPT(`cellphone`, ?) AS CHAR)", [
-                $this->aes_key
-            ]),
-            'country',
-            'state',
-            'zip',
-            'county',
-            'district',
-            'address' => new Expression("CAST(AES_DECRYPT(`address`, ?) AS CHAR)", [
-                $this->aes_key
-            ]),
-            'tracking',
-            'tail_number',
-            'message',
-            'status',
-            "pack_size",
-            "pack_size_unit",
-            'shipmented_at',
-            "paychecked_at",
-            'deleted_at',
-            'created_at',
-            'updated_at'
-        ];
         if ($request instanceof ServerRequestInterface) {
             $locale = $request->getAttribute("php_lang");
             $this->translator = new Translator();
@@ -195,26 +138,13 @@ class OrderTableGateway extends AbstractTableGateway
 
     /**
      *
-     * @return \Laminas\Db\Sql\Select
-     */
-    public function buildSubSelect()
-    {
-        $subSelectTable = $this->table;
-        $subSelect = new Select();
-        $userColumns = $this->subSelectColumns;
-        $subSelect->from($subSelectTable)->columns($userColumns);
-        return $subSelect;
-    }
-
-    /**
-     *
      * @param string $serial
      * @param boolean $likeUse
      * @return \ArrayObject
      */
     public function getRow($serial, $likeUse = false)
     {
-        $subSelect = $this->buildSubSelect();
+        $subSelect = $this->decryptSubSelectRaw;
         $select = new Select();
         $where = new Where();
         if ($likeUse) {
@@ -223,7 +153,7 @@ class OrderTableGateway extends AbstractTableGateway
             $where->equalTo('serial', $serial);
         }
         $select = $select->from([
-            'order_decrypt' => $subSelect
+            $this->getDecryptTable() => $subSelect
         ])->where($where);
         // ['serial' => $serial]
         $dataSource = $this->sql->prepareStatementForSqlObject($select)->execute();
@@ -250,10 +180,10 @@ class OrderTableGateway extends AbstractTableGateway
      */
     public function getRowFromId($id)
     {
-        $subSelect = $this->buildSubSelect();
+        $subSelect = $this->decryptSubSelectRaw;
         $select = new Select();
         $select = $select->from([
-            'order_decrypt' => $subSelect
+            $this->getDecryptTable() => $subSelect
         ])->where([
             'id' => $id
         ]);
@@ -403,10 +333,10 @@ class OrderTableGateway extends AbstractTableGateway
     public function getOrderList($users_id, $lang, $getDetail = false, $limit = 0)
     {
         $translator = AbstractValidator::getDefaultTranslator();
-        $subSelect = $this->buildSubSelect();
+        $subSelect = $this->decryptSubSelectRaw;
         $select = new Select();
         $select->from([
-            'decrypt_order' => $subSelect
+            $this->getDecryptTable() => $subSelect
         ]);
         $paymentTableGateway = new PaymentTableGateway($this->adapter);
         $select->join($paymentTableGateway->table, "{$paymentTableGateway->table}.id=decrypt_order.payment_id", [
@@ -534,13 +464,9 @@ class OrderTableGateway extends AbstractTableGateway
         $serial = date("ymd");
         $where = new Where();
         $where->between('created_at', date("Y-m-d") . ' 00:00:00', date("Y-m-d") . ' 23:59:59');
-        // $where->isNull('deleted_at');
         $num = ($this->select($where)->count() + 1 + self::$add);
         $num = $num + strtotime("now");
         $tail = str_pad($num, 10, '0', STR_PAD_LEFT);
-        //$tail = crc32($tail);
         return $prefix . $serial . $tail;
-        //2003126368
-        //4000061914
     }
 }

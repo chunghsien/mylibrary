@@ -11,12 +11,6 @@ class ContactTableGateway extends AbstractTableGateway
 
     public static $isRemoveRowGatewayFeature = false;
 
-    public function __construct($adapter)
-    {
-        parent::__construct($adapter);
-        $this->initCrypt();
-    }
-
     /**
      *
      * @inheritdoc

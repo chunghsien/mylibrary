@@ -6,7 +6,6 @@ use Chopin\LaminasDb\TableGateway\AbstractTableGateway;
 use Chopin\LaminasDb\DB;
 use Chopin\LaminasDb\RowGateway\RowGateway;
 use Chopin\LaminasDb\DB\Traits\SecurityTrait;
-use Laminas\Db\Sql\Expression;
 use Chopin\LanguageHasLocale\TableGateway\LanguageHasLocaleTableGateway;
 
 class SystemSettingsTableGateway extends AbstractTableGateway
@@ -22,61 +21,6 @@ class SystemSettingsTableGateway extends AbstractTableGateway
      * @inheritdoc
      */
     protected $table = 'system_settings';
-
-    private function processCrypt($set, $where=null)
-    {
-        $key = isset($set['key']) ? $set['key'] : '';
-        if (!$key && $where) {
-            //debug($where);
-            $row = $this->select($where)->current()->toArray();
-            $key = $row['key'];
-        }
-        $encryptionColumns = array_merge(
-            $this->defaultEncryptionColumns,
-            ['passwrod', 'from']
-        );
-        $other_secrut_check = preg_match($this->regPattern, $key);
-        $value = isset($set['value']) ? $set['value'] : '';
-        if (isset($set["aes_value"])) {
-            $set['value'] = new Expression('null');
-            $set['aes_value'] = $this->aesCrypter->encrypt($set["aes_value"]);
-        }
-        if (
-            (false !== array_search($key, $encryptionColumns, true)) ||
-            !$other_secrut_check
-        ) {
-            $set['value'] = $value;
-            if (empty($set['aes_value']) || !$set['aes_value']) {
-                $set['aes_value'] = new Expression('null');
-            }
-        } else {
-            $this->initCrypt();
-            $set['value'] = new Expression('null');
-            $set['aes_value'] = $this->aesCrypter->encrypt($value);
-        }
-        return $set ;
-    }
-    /**
-     *
-     * {@inheritDoc}
-     * @see \Laminas\Db\TableGateway\AbstractTableGateway::insert()
-     */
-    public function insert($set)
-    {
-        $set = $this->processCrypt($set);
-        return parent::insert($set);
-    }
-
-    /**
-     *
-     * {@inheritDoc}
-     * @see \Laminas\Db\TableGateway\AbstractTableGateway::update()
-     */
-    public function update($set, $where = null, array $joins = null)
-    {
-        $set = $this->processCrypt($set, $where);
-        return parent::update($set, $where, $joins);
-    }
 
     protected function getEnabledLanguagies()
     {

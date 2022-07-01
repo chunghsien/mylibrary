@@ -3,9 +3,13 @@
 namespace Chopin\Users\TableGateway;
 
 use Chopin\LaminasDb\TableGateway\AbstractTableGateway;
+use Chopin\LaminasDb\DB\Traits\SecurityTrait;
 
 class UsersProfileTableGateway extends AbstractTableGateway
 {
+    
+    use SecurityTrait;
+    
     public static $isRemoveRowGatewayFeature = false;
 
     /**

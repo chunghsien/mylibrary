@@ -6,9 +6,11 @@ use Laminas\Db\Sql\Expression;
 use Laminas\Db\Sql\Select as LaminasSelect;
 use NoProtocol\Encryption\MySQL\AES\Crypter;
 use Chopin\LaminasDb\TableGateway\AbstractTableGateway;
+use Laminas\Db\Sql\ExpressionInterface;
 
 trait SecurityTrait
 {
+
     /**
      *
      * @var Crypter
@@ -19,7 +21,7 @@ trait SecurityTrait
      *
      * @var LaminasSelect
      */
-    protected $decryptSubSelectRaw;
+    public $decryptSubSelectRaw;
 
     public $defaultEncryptionColumns = [
         'full_name',
@@ -32,19 +34,20 @@ trait SecurityTrait
         'cellphone',
         'invoice_phone',
         'tel',
-		'fax',
+        'fax',
         'telphone',
-        'address', //住址
-        'full_address', //住址
+        'address', // 住址
+        'full_address', // 住址
         'aes_value',
-        "third_party_payment_params",
+        "third_party_payment_params"
     ];
 
     /**
-     ** 預設的密碼欄位名稱
+     * * 預設的密碼欄位名稱
+     *
      * @var string
      */
-    protected $defaultPasswordColumn = 'password';
+    public $defaultPasswordColumn = 'password';
 
     /**
      *
@@ -61,12 +64,21 @@ trait SecurityTrait
     }
 
     /**
-     **建立AES加密的子查詢樣式
+     * *建立AES加密的子查詢樣式
+     *
      * @throws \ErrorException
      */
-    protected function buildAESDecryptFrom($table)
+    protected function buildAESDecryptFrom($table, $alias=null)
     {
-        $encryptionColumns = $this->getTableGateway()->encryptionColumns;
+        if($this instanceof \Laminas\Db\TableGateway\AbstractTableGateway) {
+            $tableGateway = $this;
+            $encryptionColumns = $this->encryptionColumns;
+        }else {
+            $encryptionColumns = $this->getTableGateway()->encryptionColumns;
+            $tableGateway = $this->getTableGateway();
+        }
+        
+        $encryptionColumns = $tableGateway->encryptionColumns;
         if (! $encryptionColumns) {
             $encryptionColumns = [];
         }
@@ -75,16 +87,26 @@ trait SecurityTrait
         $idEncrypt = false;
         $select = new LaminasSelect($table);
         $columns = [];
-        foreach ($this->tablegateway->getColumns() as $column) {
+        foreach ($tableGateway->getColumns() as $column) {
             if ((false !== array_search($column, $encryptColumns, true)) || $column == 'aes_value') {
                 $idEncrypt = true;
-                //CAST(AES_DECRYPT(email, '/l0WIyEE`y|tr&y@') AS CHAR) AS email
                 $encryptionOptions = config('encryption');
                 $aesKey = $encryptionOptions['aes_key'];
-                $raw = sprintf('CAST(AES_DECRYPT(%s, \'%s\') AS CHAR)', $column, $aesKey);
-                $columns[$column] = new Expression($raw);
+                $raw = "CAST(AES_DECRYPT({$tableGateway->table}.$column, ?) AS CHAR)";
+                if($alias && isset($alias[$column])) {
+                    $column = $alias[$column];
+                }
+                $columns[$column] = new Expression($raw, [$aesKey]);
             } else {
-                $columns[] = $column;
+                if($alias && isset($alias[$column])) {
+                    $newColumn = $alias[$column];
+                    if(false === strpos($newColumn, $tableGateway->table.'.')) {
+                        $newColumn = $tableGateway->table.'.'.$newColumn;
+                    }
+                    $columns[$newColumn] = $column;
+                }else {
+                    $columns[] = $column;
+                }
             }
         }
         if ($idEncrypt) {
@@ -93,7 +115,11 @@ trait SecurityTrait
             return $select;
         }
     }
-
+    
+    public function rebuildAesDecryptFrom($table, $alias=null) {
+        return $this->buildAESDecryptFrom($table, $alias);
+    }
+    
     /**
      *
      * @param string $password
@@ -104,10 +130,11 @@ trait SecurityTrait
         if (floatval(PHP_VERSION) < 7.2) {
             $algo = PASSWORD_DEFAULT;
         } else {
-            $algo =  PASSWORD_ARGON2I;
+            $algo = PASSWORD_ARGON2I;
         }
         return password_hash($password, $algo);
     }
+
     /**
      *
      * @param array $set
@@ -118,10 +145,10 @@ trait SecurityTrait
         if ($this instanceof AbstractTableGateway) {
             $tablegateway = $this;
         } else {
-            $tablegateway = isset($this->tablegateway) ? $this->tablegateway : null ;
+            $tablegateway = isset($this->tablegateway) ? $this->tablegateway : null;
         }
 
-        if (!$tablegateway || !($tablegateway instanceof AbstractTableGateway)) {
+        if (! $tablegateway || ! ($tablegateway instanceof AbstractTableGateway)) {
             throw new \ErrorException('物件需有 tablegateway屬性');
         }
         $encryptionColumns = [];
@@ -132,7 +159,7 @@ trait SecurityTrait
         $encryptColumns = array_merge($this->defaultEncryptionColumns, $encryptionColumns);
         if (is_array($set)) {
             foreach ($encryptColumns as $encrypt) {
-                if (empty($set[$encrypt])) {
+                if (empty($set[$encrypt]) || $set[$encrypt] instanceof ExpressionInterface) {
                     continue;
                 }
                 if (is_string($set[$encrypt]) && $set[$encrypt]) {
@@ -170,14 +197,14 @@ trait SecurityTrait
                     $password = $set[$this->defaultPasswordColumn];
                     $set['salt'] = $salt;
                     $password = str_replace($salt, '', $password);
-                    $set[$this->defaultPasswordColumn] = $this->passwordHash($password.$salt);
+                    $set[$this->defaultPasswordColumn] = $this->passwordHash($password . $salt);
                 } else {
                     unset($set[$this->defaultPasswordColumn]);
                 }
             }
             if (isset($set["temporay_password"])) {
                 if (is_string($set["temporay_password"])) {
-                    if (!$set["temporay_password"]) {
+                    if (! $set["temporay_password"]) {
                         $set["temporay_password"] = new Expression("null");
                     } else {
                         $temporay_password = $set["temporay_password"];
@@ -192,9 +219,9 @@ trait SecurityTrait
 
     public function getDecryptTable()
     {
-        $decryptTable = 'decrypt_'.$this->table;
+        $decryptTable = 'decrypt_' . $this->table;
         $decryptTable = str_replace(self::$prefixTable, '', $decryptTable);
-        $decryptTable = self::$prefixTable.$decryptTable;
+        $decryptTable = self::$prefixTable . $decryptTable;
         return $decryptTable;
     }
 
@@ -213,6 +240,9 @@ trait SecurityTrait
         $encryptionColumns = $this->defaultEncryptionColumns;
         if (is_string($data)) {
             return $this->aesCrypter->decrypt($data);
+        }
+        if($this->table == "CK_contact") {
+            debug($data);
         }
         if (is_array($data)) {
             foreach ($data as $key => &$value) {

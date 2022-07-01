@@ -1,5 +1,4 @@
 <?php
-
 namespace Chopin\LaminasDb\TableGateway;
 
 use Laminas\Db\TableGateway\TableGateway as LaminasTableGateway;
@@ -61,6 +60,12 @@ abstract class AbstractTableGateway extends LaminasTableGateway
         $this->table = self::$prefixTable . $this->table;
         parent::__construct($this->table, $adapter, null, new ResultSet());
         $this->initCacheAdapter();
+        $reflection = new \ReflectionClass(get_class($this));
+        $trits = array_keys($reflection->getTraits());
+        if (false !== array_search(SecurityTrait::class, $trits)) {
+            $this->initCrypt();
+            $this->buildAESDecryptFrom($this->table);
+        }
     }
 
     /**
@@ -77,13 +82,14 @@ abstract class AbstractTableGateway extends LaminasTableGateway
         } else {
             $filter = new UnderscoreToCamelCase();
             $classname = str_replace(self::$prefixTable, '', $classOrTable);
-            $tailClassname = ucfirst($filter->filter($classOrTable)) . 'TableGateway';
+            $classname = str_replace('decrypt_', '', $classname);
+            $tailClassname = ucfirst($filter->filter($classname)) . 'TableGateway';
             $tailFilename = $tailClassname . '.php';
             $globs = glob('vendor/chunghsien/chopin/**/src/TableGateway/' . $tailFilename);
             if ($globs && count($globs) == 1) {
                 $filename = $globs[0];
                 $classname = self::filenameToClass($filename);
-                //$classname = $fileGenerator->getClass()->name;
+                // $classname = $fileGenerator->getClass()->name;
                 if (class_exists($classname)) {
                     $reflectionClass = new \ReflectionClass($classname);
                     return $reflectionClass->newInstance($adapter);
@@ -93,8 +99,9 @@ abstract class AbstractTableGateway extends LaminasTableGateway
             throw new \ErrorException($classname . ': 類別名稱不存在。');
         }
     }
-    
-    private static function filenameToClass($filename) {
+
+    private static function filenameToClass($filename)
+    {
         $classname = str_replace('/src', '', $filename);
         $classname = str_replace('vendor/chunghsien/chopin/', '', $classname);
         $classname = explode('chopin-', $classname);
@@ -108,7 +115,7 @@ abstract class AbstractTableGateway extends LaminasTableGateway
         $classname = implode('\\', $classname);
         $classname = str_replace('/', '\\', $classname);
         $classname = preg_replace('/\.php$/', '', $classname);
-        $classname = "Chopin".$classname;
+        $classname = "Chopin" . $classname;
         return $classname;
     }
 
@@ -212,7 +219,7 @@ abstract class AbstractTableGateway extends LaminasTableGateway
                 }
             }
             if (config('env_cache.db')) {
-                //$tableCacheFeature = new CacheTableFeature();
+                // $tableCacheFeature = new CacheTableFeature();
                 $this->featureSet->addFeature(new CacheTableFeature());
             }
             if (method_exists($this, 'initCrypt')) {
@@ -416,7 +423,9 @@ abstract class AbstractTableGateway extends LaminasTableGateway
             $predicateParams[] = [
                 'isNull',
                 'AND',
-                ['deleted_at']
+                [
+                    'deleted_at'
+                ]
             ];
         }
         $scripts = [
@@ -463,8 +472,8 @@ abstract class AbstractTableGateway extends LaminasTableGateway
         if (false !== array_search(SecurityTrait::class, $trits, true)) {
             $set = $this->securty($set);
         }
-        //防止伺服器時間與本地時間不一致有需要可以修改./index.php date_default_timezone_set()
-        //預設為Asia/Taipei
+        // 防止伺服器時間與本地時間不一致有需要可以修改./index.php date_default_timezone_set()
+        // 預設為Asia/Taipei
         if (false !== array_search("created_at", $this->columns, true)) {
             $set["created_at"] = date("Y-m-d H:i:s");
         }
@@ -473,10 +482,10 @@ abstract class AbstractTableGateway extends LaminasTableGateway
 
     /**
      *
-     * {@inheritDoc}
+     * {@inheritdoc}
      * @see \Laminas\Db\TableGateway\AbstractTableGateway::update()
      */
-    public function update($set, $where = null, array $joins=null)
+    public function update($set, $where = null, array $joins = null)
     {
         if ($this->getTailTableName() != 'system_settings' || empty($set["aes_value"])) {
             $reflection = new \ReflectionClass(get_class($this));
@@ -486,8 +495,8 @@ abstract class AbstractTableGateway extends LaminasTableGateway
                 $set = $this->securty($set);
             }
         }
-        //防止伺服器時間與本地時間不一致有需要可以修改./index.php date_default_timezone_set()
-        //預設為Asia/Taipei
+        // 防止伺服器時間與本地時間不一致有需要可以修改./index.php date_default_timezone_set()
+        // 預設為Asia/Taipei
         if (false !== array_search("updated_at", $this->columns, true)) {
             $set["updated_at"] = date("Y-m-d H:i:s");
         }
@@ -518,7 +527,10 @@ abstract class AbstractTableGateway extends LaminasTableGateway
         return $child;
     }
 
-    protected function injectLanguageHasLocaleJson(RowGatewayInterface $row, $sequence=['locale_id', 'language_id'])
+    protected function injectLanguageHasLocaleJson(RowGatewayInterface $row, $sequence = [
+        'locale_id',
+        'language_id'
+    ])
     {
         if (isset($row->language_id) && isset($row->locale_id)) {
             $object = [];
@@ -530,8 +542,6 @@ abstract class AbstractTableGateway extends LaminasTableGateway
         unset($sequence);
         return $row;
     }
-
-
 
     /**
      *
@@ -547,7 +557,7 @@ abstract class AbstractTableGateway extends LaminasTableGateway
             $where->isNull("deleted_at");
         }
         $select = $this->fetchSelect($where, $columns);
-        //$select->where($where);
+        // $select->where($where);
         return $this->selectWith($select)->current();
     }
 
