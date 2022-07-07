@@ -27,18 +27,18 @@ class SiteViewChangeCommand extends Command
             $output->writeln('<error>不支援這個type</error>');
             return 0;
         }
-        $constent = file_get_contents('./package.json');
-        $constent = str_replace(['sview=twig', 'sview=react'], "sview={$type}", $constent);
-        if (file_put_contents('./package.json', $constent)) {
+        $constant = file_get_contents('./package.json');
+        $constant = str_replace(['sview=twig', 'sview=react'], "sview={$type}", $constant);
+        if (file_put_contents('./package.json', $constant)) {
             $output->writeln('<info>./package.json更改成功</info>');
         } else {
             $output->writeln('<error>./package.json更改失敗</error>');
         }
-        $constent = file_get_contents('./config/autoload/template.global.php');
+        $constant = file_get_contents('./config/autoload/template.global.php');
         $replace = sprintf('"sview" => "%s"', $type);
         $search = ['"sview" => "react"', '"sview" => "twig"'];
-        $constent = str_replace($search, $replace, $constent);
-        if (file_put_contents('./config/autoload/template.global.php', $constent)) {
+        $constant = str_replace($search, $replace, $constant);
+        if (file_put_contents('./config/autoload/template.global.php', $constant)) {
             $output->writeln('<info>./config/autoload/template.global.php更改成功</info>');
         } else {
             $output->writeln('<error>./config/autoload/template.global.php更改失敗</error>');
