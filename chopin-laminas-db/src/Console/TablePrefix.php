@@ -48,7 +48,9 @@ class TablePrefix extends Command
         $adapter = $this->container->get(Adapter::class);
         $metadata = \Laminas\Db\Metadata\Source\Factory::createSourceFromAdapter($adapter);
         $tableNames = $metadata->getTableNames();
-        AbstractTableGateway::$prefixTable = config('db.adapters.'.Adapter::class)['prefix'];
+        $config = config('db');
+        $prefixTable = $config['prefix'];
+        AbstractTableGateway::$prefixTable = $prefixTable;
         $argment = $input->getArgument('rm');
         foreach ($tableNames as $table) {
             $prefix = AbstractTableGateway::$prefixTable;

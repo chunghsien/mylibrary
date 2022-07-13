@@ -12,7 +12,8 @@ trait Profiling
     public function runDbProfiling($sqlScript='', AbstractTableGateway $tableGateway=null)
     {
         if ($this->is_profiling === false) {
-            $config = config('db.adapters.'.Adapter::class);
+            
+            $config = config('db');
             if (isset($config['profiling']) && $config['profiling']) {
                 $this->is_profiling = true;
             } else {

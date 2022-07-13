@@ -63,9 +63,8 @@ abstract class AbstractMigration
 
     public function __construct(Adapter $adapter)
     {
-        $config = config('db.adapters');
-        $pt = $config[Adapter::class]['prefix'];
-
+        $config = config('db');
+        $pt = $config['prefix'];
         $this->tailTable = $this->table;
         if (isset($pt) && $pt) {
             $this->table = $pt. $this->table;
