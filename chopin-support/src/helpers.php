@@ -1,4 +1,5 @@
 <?php
+
 use Laminas\Diactoros\ServerRequestFactory;
 use Laminas\Db\Sql\Expression;
 use Chopin\Support\Log;
@@ -382,11 +383,6 @@ if (! function_exists('config') && is_file('config/config.php')) {
 
     function isAjax(ServerRequestInterface $request = null)
     {
-        // HTTP-X-REQUESTED-WITH
-        // HTTP_X_REQUESTED_WITH
-        // HTTP_X_REQUESTED_WITH
-        // HTTP_REFERER
-        // SERVER_NAME
         $http_x_requested_with = isset($_SERVER['HTTP_X_REQUESTED_WITH']) ? strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) : null;
         $routeName = '';
         if($request) {
@@ -624,7 +620,7 @@ if (! function_exists('config') && is_file('config/config.php')) {
         logger()->err($errorMessage);
     }
 
-    function nameMask($var, $type = null)
+    function nameMask($var, $type = null, $pattern = '*')
     {
         $matches = [];
         switch ($type) {
@@ -634,27 +630,33 @@ if (! function_exists('config') && is_file('config/config.php')) {
                     $var = str_replace($matches[0][0], "** **", $var);
                 }
                 break;
-            case "cellphone":
-                /*
-                preg_match("/\s{1}\d{3}\s{1}/", $var, $matches);
-                if($matches) {
-                    $var = str_replace($matches[0], " *** ", $var);
+            case "twCellphone":
+                $var = mb_convert_kana($var, 'nas');
+                $replacedVar = preg_replace('/^\+886/', '', $var);
+                $patterns = str_pad('', 4, $pattern);
+                $replacedVar = substr_replace($replacedVar, $patterns, - 6, 4);
+                if(preg_match('/^\+886/', $var)) {
+                    $replacedVar = '+886'.$replacedVar;
                 }
-                */
-                $var = substr_replace($var, '****', - 6, 4);
+                $var = $replacedVar;
                 break;
             case "chAddress":
-                $tmpAddress = mb_substr($var, 0, 3, "UTF-8");
-                $var = '０００' . $tmpAddress;
+                $replaceZipAddr = preg_replace('/^\d{3,5}/', '', $var);
+                $headStr = mb_substr($replaceZipAddr, 0, 6, "UTF-8");
+                $maskStr = '';
+                for($i=0 ; $i < mb_strlen($replaceZipAddr)-6 ; $i++) {
+                    $maskStr.= $pattern;
+                }
+                $var = $headStr.$maskStr;
                 break;
             case "chName":
                 $strlen = mb_strlen($var, 'utf-8');
                 $firstStr = mb_substr($var, 0, 1, 'utf-8');
                 $lastStr = mb_substr($var, - 1, 1, 'utf-8');
                 if (mb_strlen($var) == 3) {
-                    $lastStr = "０";
+                    $lastStr = $pattern;
                 }
-                return $strlen == 2 ? $firstStr . str_repeat('０', mb_strlen($var, 'utf-8') - 1) : $firstStr . str_repeat("０", $strlen - 2) . $lastStr;
+                return $strlen == 2 ? $firstStr . str_repeat($pattern, mb_strlen($var, 'utf-8') - 1) : $firstStr . str_repeat($pattern, $strlen - 2) . $lastStr;
                 break;
             default:
                 $strlen = mb_strlen($var, 'utf-8');

@@ -17,6 +17,7 @@ use Laminas\I18n\Translator\Translator;
 
 abstract class TwigMail
 {
+    
     /**
      *
      * @param ServerRequest $request
@@ -36,10 +37,10 @@ abstract class TwigMail
         $translator->addTranslationFilePattern('phpArray', PROJECT_DIR . '/resources/languages/', '%s/site-translation.php', 'site-translation');
         $translator->setLocale($request->getAttribute('php_lang'));
         Registry::set('laminasTranslator', $translator);
-        //logger()->debug(json_encode($template["vars"], JSON_UNESCAPED_UNICODE));
+        // logger()->debug(json_encode($template["vars"], JSON_UNESCAPED_UNICODE));
         $orderFullname = $member["full_name"];
         $recepientFullName = $order["fullname"];
-        $recepientCellphone = nameMask($order["cellphone"], 'cellphone');
+        $recepientCellphone = nameMask($order["cellphone"], 'twCellphone');
         $recepientAddress = $order["address"];
         if (preg_match('/^zh/', $indexLang)) {
             $orderFullname = nameMask($orderFullname, "chName");
@@ -53,15 +54,17 @@ abstract class TwigMail
         $emailSubJect = $translator->translate('thanks ordered mail subject', 'site-translation');
         $emailSubJect = str_replace('%member_fullname%', $orderFullname, $emailSubJect);
         $emailSubJect = str_replace('%store_name%', $storeName, $emailSubJect);
-
+        
         $memberMail = $member["email"];
         $orderMail = $order["email"];
-        $to = [$memberMail];
+        $to = [
+            $memberMail
+        ];
         if ($memberMail != $orderMail) {
             $to[] = $orderMail;
         }
         $mailConfig = $pageConfig["system_settings"]["mail-service"]["to_config"];
-
+        
         $serviceEmail = $siteInfoConfig["email"];
         $serviceName = $siteInfoConfig["email_service_from_name"];
         self::mail([
@@ -73,10 +76,10 @@ abstract class TwigMail
             ],
             "subject" => $emailSubJect,
             "template" => $template,
-            "transport" => $mailConfig,
+            "transport" => $mailConfig
         ]);
     }
-
+    
     public static function mail(array $options, array $headLines = [])
     {
         /*
@@ -109,8 +112,8 @@ abstract class TwigMail
         $html->type = Mime::TYPE_HTML;
         $html->charset = 'utf-8';
         $html->encoding = Mime::ENCODING_QUOTEDPRINTABLE;
-        //echo $htmlMarkup;
-        //exit();
+        // echo $htmlMarkup;
+        // exit();
         $body = new MimeMessage();
         $body->addPart($html);
         $mail = new MailMessage();
@@ -137,7 +140,10 @@ abstract class TwigMail
                 if ($func == 'setTo') {
                     foreach ($param as $to) {
                         if (is_array($to)) {
-                            call_user_func_array([$mail, 'setTo'], $to);
+                            call_user_func_array([
+                                $mail,
+                                'setTo'
+                            ], $to);
                         } else {
                             $mail->setTo($to);
                         }
@@ -163,7 +169,7 @@ abstract class TwigMail
         if (preg_match("/sendmail$/", $options['transport']['mail_method']) || $options['transport']['mail_method'] == 'none') {
             $trsnsport = new Sendmail();
         }
-
+        
         if ($options['transport']['mail_method'] == 'smtp') {
             $trsnsport = new SmtpTransport();
             $transportOptions = [];
