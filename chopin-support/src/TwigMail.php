@@ -17,7 +17,7 @@ use Laminas\I18n\Translator\Translator;
 
 abstract class TwigMail
 {
-    
+
     /**
      *
      * @param ServerRequest $request
@@ -40,12 +40,13 @@ abstract class TwigMail
         // logger()->debug(json_encode($template["vars"], JSON_UNESCAPED_UNICODE));
         $orderFullname = $member["full_name"];
         $recepientFullName = $order["fullname"];
-        $recepientCellphone = nameMask($order["cellphone"], 'twCellphone');
+        $recepientCellphone = InfomationMask::mask($order["cellphone"], 2, 2);
         $recepientAddress = $order["address"];
+        $orderFullname = InfomationMask::mask($orderFullname, 1, 1);
+        $recepientFullName = InfomationMask::mask($recepientFullName, 1, 1);
+        $recepientAddress = InfomationMask::mask($recepientAddress, 3, 3);
+        
         if (preg_match('/^zh/', $indexLang)) {
-            $orderFullname = nameMask($orderFullname, "chName");
-            $recepientFullName = nameMask($recepientFullName, "chName");
-            $recepientAddress = nameMask($recepientAddress, "chAddress");
         }
         $template["vars"]["member"]["full_name"] = $orderFullname;
         $template["vars"]["order"]["fullname"] = $recepientFullName;
@@ -54,7 +55,7 @@ abstract class TwigMail
         $emailSubJect = $translator->translate('thanks ordered mail subject', 'site-translation');
         $emailSubJect = str_replace('%member_fullname%', $orderFullname, $emailSubJect);
         $emailSubJect = str_replace('%store_name%', $storeName, $emailSubJect);
-        
+
         $memberMail = $member["email"];
         $orderMail = $order["email"];
         $to = [
@@ -64,7 +65,7 @@ abstract class TwigMail
             $to[] = $orderMail;
         }
         $mailConfig = $pageConfig["system_settings"]["mail-service"]["to_config"];
-        
+
         $serviceEmail = $siteInfoConfig["email"];
         $serviceName = $siteInfoConfig["email_service_from_name"];
         self::mail([
@@ -79,7 +80,7 @@ abstract class TwigMail
             "transport" => $mailConfig
         ]);
     }
-    
+
     public static function mail(array $options, array $headLines = [])
     {
         /*
@@ -169,7 +170,7 @@ abstract class TwigMail
         if (preg_match("/sendmail$/", $options['transport']['mail_method']) || $options['transport']['mail_method'] == 'none') {
             $trsnsport = new Sendmail();
         }
-        
+
         if ($options['transport']['mail_method'] == 'smtp') {
             $trsnsport = new SmtpTransport();
             $transportOptions = [];

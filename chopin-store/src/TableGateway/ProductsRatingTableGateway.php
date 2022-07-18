@@ -5,13 +5,11 @@ namespace Chopin\Store\TableGateway;
 use Chopin\LaminasDb\TableGateway\AbstractTableGateway;
 use Laminas\Db\Sql\Where;
 use Psr\Http\Message\ServerRequestInterface;
-use Chopin\LaminasDb\RowGateway\RowGateway;
-use Laminas\Db\Sql\Sql;
-use Chopin\LaminasDb\ResultSet\ResultSet;
 use Chopin\Store\RowGateway\ProductsRowGateway;
 use Chopin\LaminasDb\DB\Traits\SecurityTrait;
 use Laminas\Db\Sql\Expression;
 use Chopin\Users\TableGateway\MemberTableGateway;
+use Chopin\Support\InfomationMask;
 
 class ProductsRatingTableGateway extends AbstractTableGateway
 {
@@ -52,7 +50,7 @@ class ProductsRatingTableGateway extends AbstractTableGateway
         $productsTableGateway = new ProductsTableGateway($this->adapter);
         foreach ($resultset as $row) {
             if ($row->language_id == 119) {
-                $row->full_name = nameMask($row->full_name, 'chName');
+                $row->full_name = InfomationMask::mask($row->full_name, 1, 1);
             }
 
             $select = $productsTableGateway->getSql()->select();
@@ -97,7 +95,7 @@ class ProductsRatingTableGateway extends AbstractTableGateway
         foreach ($result as &$item) {
             $fullName = $this->deCryptData($item["full_name"]);
             if ($fullName) {
-                $fullName = nameMask($fullName, "chName");
+                $fullName = InfomationMask::mask($fullName, 1, 1);
                 $item["full_name"] = $fullName;
             }
         }

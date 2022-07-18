@@ -620,6 +620,13 @@ if (! function_exists('config') && is_file('config/config.php')) {
         logger()->err($errorMessage);
     }
 
+    /**
+     * @deprecated
+     * @param string $var
+     * @param string $type
+     * @param string $pattern
+     * @return string
+     */
     function nameMask($var, $type = null, $pattern = '*')
     {
         $matches = [];
@@ -658,6 +665,16 @@ if (! function_exists('config') && is_file('config/config.php')) {
                 }
                 return $strlen == 2 ? $firstStr . str_repeat($pattern, mb_strlen($var, 'utf-8') - 1) : $firstStr . str_repeat($pattern, $strlen - 2) . $lastStr;
                 break;
+            case "email":
+                $strlen = mb_strlen($var, 'utf-8');
+                $firstStr = mb_substr($var, 0, 1, 'utf-8');
+                $lastStr = mb_substr($var, - 1, 1, 'utf-8');
+                if (mb_strlen($var) == 3) {
+                    $lastStr = $pattern;
+                }
+                return $strlen == 2 ? $firstStr . str_repeat($pattern, mb_strlen($var, 'utf-8') - 1) : $firstStr . str_repeat($pattern, $strlen - 2) . $lastStr;
+                break;
+                
             default:
                 $strlen = mb_strlen($var, 'utf-8');
                 for ($i = 1; $i < ($strlen - 1); $i ++) {
