@@ -13,6 +13,8 @@ use Laminas\Db\RowGateway\RowGatewayInterface;
 use Laminas\Db\ResultSet\ResultSetInterface;
 use Laminas\Db\Sql\Select;
 use function class_exists;
+use Chopin\LanguageHasLocale\TableGateway\LanguageHasLocaleTableGateway;
+use Laminas\Validator\Translator\TranslatorInterface;
 
 class CouponTableGateway extends AbstractTableGateway
 {
@@ -83,16 +85,66 @@ class CouponTableGateway extends AbstractTableGateway
     public function __construct(\Laminas\Db\Adapter\Adapter $adapter, $request = null)
     {
         parent::__construct($adapter);
+        $this->translator = new Translator();
         if ($request instanceof ServerRequestInterface) {
             $this->request = $request;
             $locale = $request->getAttribute("php_lang");
-            $this->translator = new Translator();
+            
             $this->translator->setLocale($locale);
-            $filename = dirname(dirname(__DIR__)) . '/resources/languages/' . $locale . '/chopin-store.php';
+            $filename = dirname(__DIR__, 2).'/resources/languages/' . $locale . '/chopin-store.php';
             $this->translator->addTranslationFile("phpArray", $filename, 'chopin-store', $locale);
+            $filename = dirname(__DIR__, 2).'/resources/languages/' . $locale . "/translation.php";
+            $this->translator->addTranslationFile('phpArray', $filename, "translation", $locale);
+            
         }
     }
-
+    
+    public function getReactSelectValues(ServerRequestInterface $request)
+    {
+        $locale = $request->getAttribute("php_lang");
+        $filename = './resources/languages/' . $locale . "/translation.php";
+        $this->translator->addTranslationFile('phpArray', $filename, "translation", $locale);
+        $this->translator->setLocale($locale);
+        $defaultLabel = $this->translator->translate("coupon-scope-all", "translation");
+        $options = [
+            "scope" =>[
+                ["label" => $defaultLabel, "value" => "0"]
+            ],
+        ];
+        $productsTableGateway = new ProductsTableGateway($this->adapter);
+        $productsSelect = $productsTableGateway->getSql()->select();
+        $productsSelect->columns(['id', 'model'])->order(['language_id ASC', 'locale_id ASC']);
+        $productsWhere = $productsSelect->where;
+        $productsWhere->isNull('deleted_at');
+        $productsSelect->where($productsWhere);
+        $resultset = $productsTableGateway->selectWith($productsSelect);
+        foreach ($resultset as $row) {
+            $options["scope"][] = ["label" => $row->model, "value" => $row->id];
+        }
+        $methodOrId = $request->getAttribute('methodOrId');
+        if(preg_match('/^\d+$/', $methodOrId)) {
+            $selfRow = $this->select(['id' => $methodOrId])->current();
+            if($selfRow->scope == 0) {
+                $values = [
+                    "scope" =>[["label" => $defaultLabel, "value" => "0"]]
+                ];
+            }else {
+                $productsRow = $productsTableGateway->select(["id" => $selfRow->scope])->current();
+                $values = [
+                    "scope" =>[["label" => $productsRow->model, "value" => $productsRow->id]]
+                ];
+                
+            }
+        }else {
+            $values = [
+                "scope" =>[["label" => $defaultLabel, "value" => "0"]]
+            ];
+        }
+        return [
+            "options" => $options,
+            "values" => $values,
+        ];
+    }
     /**
      *
      * @deprecated

@@ -131,7 +131,7 @@ class OrderTableGateway extends AbstractTableGateway
             $locale = $request->getAttribute("php_lang");
             $this->translator = new Translator();
             $this->translator->setLocale($locale);
-            $filename = dirname(dirname(__DIR__)) . '/resources/languages/' . $locale . "/chopin-store.php";
+            $filename = dirname(__DIR__, 2).'/resources/languages/' . $locale . "/chopin-store.php";
             $this->translator->addTranslationFile('phpArray', $filename, "chopin-store", $locale);
         }
     }
@@ -214,12 +214,12 @@ class OrderTableGateway extends AbstractTableGateway
         if (! $this->translator instanceof TranslatorInterface) {
             $this->translator = new Translator();
             $this->translator->setLocale($locale);
-            $filename = dirname(dirname(__DIR__)) . '/resources/languages/' . $locale . "/chopin-store.php";
+            $filename = dirname(__DIR__, 2).'/resources/languages/' . $locale . "/chopin-store.php";
             $this->translator->addTranslationFile('phpArray', $filename, "chopin-store", $locale);
         }
         if ($this->translator->getLocale() != $locale) {
             $this->translator->setLocale($locale);
-            $filename = dirname(dirname(__DIR__)) . '/resources/languages/' . $locale . "/chopin-store.php";
+            $filename = dirname(__DIR__, 2).'/resources/languages/' . $locale . "/chopin-store.php";
             $this->translator->addTranslationFile('phpArray', $filename, "chopin-store", $locale);
         }
     }
@@ -359,7 +359,7 @@ class OrderTableGateway extends AbstractTableGateway
         $resultSet->initialize($dataSource);
         $resultSet = $resultSet->toArray();
         $translator = new Translator();
-        $translator->addTranslationFilePattern('phpArray', PROJECT_DIR . '/resources/languages/', '%s/order.php');
+        $translator->addTranslationFilePattern('phpArray', PROJECT_DIR.'/resources/languages/', '%s/order.php');
         $translator->setLocale($lang);
         $orderDetailTableGateway = new OrderDetailTableGateway($this->adapter);
         $logisticsServiceNamespace = config('third_party_service.logistics.logisticsServiceNamespace');

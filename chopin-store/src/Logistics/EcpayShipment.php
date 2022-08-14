@@ -493,7 +493,7 @@ class EcpayShipment extends AbstractPayment
         $localeCode = $this->getLocaleCode($orderData);
         $translator = new Translator();
         $translator->setLocale($localeCode);
-        $filename = './resources/languages/' . $localeCode . "/site-translation.php";
+        $filename = PROJECT_DIR.'/resources/languages/' . $localeCode . "/site-translation.php";
         $translator->addTranslationFile('phpArray', $filename);
         $modelAndCombinations = $this->getModelAndCombinations($orderData);
         $tradeDesc = $translator->translate('ecpay-trad-desc');
@@ -586,7 +586,7 @@ class EcpayShipment extends AbstractPayment
         $localeCode = $this->getLocaleCode($orderData);
         $translator = new Translator();
         $translator->setLocale($localeCode);
-        $filename = './resources/languages/' . $localeCode . "/site-translation.php";
+        $filename = PROJECT_DIR.'/resources/languages/' . $localeCode . "/site-translation.php";
         $translator->addTranslationFile('phpArray', $filename);
         $modelAndCombinations = $this->getModelAndCombinations($orderData);
         $tradeDesc = $translator->translate('ecpay-trad-desc');
@@ -736,7 +736,7 @@ class EcpayShipment extends AbstractPayment
         $clientRedirectURL = "{$urlPrefix}/ecpay-confirm/client_redirect";
         $translator = new Translator();
         $translator->setLocale($localeCode);
-        $filename = './resources/languages/' . $localeCode . "/site-translation.php";
+        $filename = PROJECT_DIR.'/resources/languages/' . $localeCode . "/site-translation.php";
         $translator->addTranslationFile('phpArray', $filename);
         $modelAndCombinations = $this->getModelAndCombinations($orderData);
         $tradeDesc = $translator->translate('ecpay-trad-desc');

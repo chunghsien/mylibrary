@@ -56,7 +56,7 @@ if (! function_exists('config') && is_file('config/config.php')) {
              * @var Translator $translator;
              */
             if (! $allMessages) {
-                $file = PROJECT_DIR . "/resources/languages/{$locale}/{$textDomain}.php";
+                $file = PROJECT_DIR."/resources/languages/{$locale}/{$textDomain}.php";
                 if (is_file($file)) {
                     $translator->addTranslationFile('phpArray', $file, $textDomain);
                     $allMessages = $translator->getAllMessages($textDomain, $locale);

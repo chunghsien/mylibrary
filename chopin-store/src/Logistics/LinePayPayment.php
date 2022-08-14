@@ -245,7 +245,7 @@ class LinePayPayment extends AbstractPayment
         unset($detail);
         $phpLang = $request->getAttribute('php_lang');
         $translator = new Translator();
-        $translator->addTranslationFilePattern('phpArray', PROJECT_DIR . '/resources/languages/', '%s/linepay.php');
+        $translator->addTranslationFilePattern('phpArray', PROJECT_DIR.'/resources/languages/', '%s/linepay.php');
         $translator->setLocale($phpLang);
 
         $products[] = [

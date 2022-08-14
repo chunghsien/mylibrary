@@ -42,7 +42,7 @@ class BannerTableGateway extends AbstractTableGateway
             $locale = $request->getAttribute("php_lang");
             $this->translator = new Translator();
             $this->translator->setLocale($locale);
-            $filename = dirname(dirname(__DIR__)) . '/resources/languages/' . $locale . '/chopin-banner.php';
+            $filename = PROJECT_DIR.'/resources/languages/' . $locale . '/chopin-banner.php';
             $this->translator->addTranslationFile("phpArray", $filename, 'chopin-store', $locale);
         }
     }
