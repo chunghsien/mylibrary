@@ -88,7 +88,7 @@ trait SecurityTrait
         $select = new LaminasSelect($table);
         $columns = [];
         foreach ($tableGateway->getColumns() as $column) {
-            if ((false !== array_search($column, $encryptColumns, true)) || $column == 'aes_value') {
+            if ((false !== array_search($column, $encryptColumns, true)) || $column == 'aes_value' || preg_match('/_email|_fax|_tel|_phone$/', $column)) {
                 $idEncrypt = true;
                 $encryptionOptions = config('encryption');
                 $aesKey = $encryptionOptions['aes_key'];
