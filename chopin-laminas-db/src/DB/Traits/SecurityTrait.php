@@ -74,7 +74,6 @@ trait SecurityTrait
             $tableGateway = $this;
             $encryptionColumns = $this->encryptionColumns;
         }else {
-            $encryptionColumns = $this->getTableGateway()->encryptionColumns;
             $tableGateway = $this->getTableGateway();
         }
         
@@ -88,7 +87,7 @@ trait SecurityTrait
         $select = new LaminasSelect($table);
         $columns = [];
         foreach ($tableGateway->getColumns() as $column) {
-            if ((false !== array_search($column, $encryptColumns, true)) || $column == 'aes_value') {
+            if ((false !== array_search($column, $encryptColumns, true)) || $column == 'aes_value' || preg_match('/_email|_fax|_tel|_phone$/', $column)) {
                 $idEncrypt = true;
                 $encryptionOptions = config('encryption');
                 $aesKey = $encryptionOptions['aes_key'];
@@ -246,7 +245,7 @@ trait SecurityTrait
         }
         if (is_array($data)) {
             foreach ($data as $key => &$value) {
-                if (array_search($key, $encryptionColumns, true) !== false) {
+                if(array_search($key, $encryptionColumns) !== false || preg_match('/_email|_fax|_tel|_phone$/', $key)) {
                     if ($value) {
                         $value = $this->aesCrypter->decrypt($value);
                     }
