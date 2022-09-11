@@ -24,6 +24,10 @@ if (! function_exists('config') && is_file('config/config.php')) {
         return $return;
     }
 
+    function isGarbled($str) {
+        return json_encode($str) === null;
+    }
+
     function getAppEnvConstant()
     {
         return $_ENV["APP_ENV"];

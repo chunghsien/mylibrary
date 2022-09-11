@@ -1,5 +1,4 @@
 <?php
-
 namespace Chopin\LaminasDb\DB\Traits;
 
 use Laminas\Db\Sql\Expression;
@@ -68,15 +67,15 @@ trait SecurityTrait
      *
      * @throws \ErrorException
      */
-    protected function buildAESDecryptFrom($table, $alias=null)
+    protected function buildAESDecryptFrom($table, $alias = null)
     {
-        if($this instanceof \Laminas\Db\TableGateway\AbstractTableGateway) {
+        if ($this instanceof \Laminas\Db\TableGateway\AbstractTableGateway) {
             $tableGateway = $this;
             $encryptionColumns = $this->encryptionColumns;
-        }else {
+        } else {
             $tableGateway = $this->getTableGateway();
         }
-        
+
         $encryptionColumns = $tableGateway->encryptionColumns;
         if (! $encryptionColumns) {
             $encryptionColumns = [];
@@ -92,18 +91,20 @@ trait SecurityTrait
                 $encryptionOptions = config('encryption');
                 $aesKey = $encryptionOptions['aes_key'];
                 $raw = "CAST(AES_DECRYPT({$tableGateway->table}.$column, ?) AS CHAR)";
-                if($alias && isset($alias[$column])) {
+                if ($alias && isset($alias[$column])) {
                     $column = $alias[$column];
                 }
-                $columns[$column] = new Expression($raw, [$aesKey]);
+                $columns[$column] = new Expression($raw, [
+                    $aesKey
+                ]);
             } else {
-                if($alias && isset($alias[$column])) {
+                if ($alias && isset($alias[$column])) {
                     $newColumn = $alias[$column];
-                    if(false === strpos($newColumn, $tableGateway->table.'.')) {
-                        $newColumn = $tableGateway->table.'.'.$newColumn;
+                    if (false === strpos($newColumn, $tableGateway->table . '.')) {
+                        $newColumn = $tableGateway->table . '.' . $newColumn;
                     }
                     $columns[$newColumn] = $column;
-                }else {
+                } else {
                     $columns[] = $column;
                 }
             }
@@ -114,11 +115,12 @@ trait SecurityTrait
             return $select;
         }
     }
-    
-    public function rebuildAesDecryptFrom($table, $alias=null) {
+
+    public function rebuildAesDecryptFrom($table, $alias = null)
+    {
         return $this->buildAESDecryptFrom($table, $alias);
     }
-    
+
     /**
      *
      * @param string $password
@@ -162,7 +164,10 @@ trait SecurityTrait
                     continue;
                 }
                 if (is_string($set[$encrypt]) && $set[$encrypt]) {
-                    $set[$encrypt] = $this->aesCrypter->encrypt($set[$encrypt]);
+                    $string = $set[$encrypt];
+                    if (! isGarbled($string)) {
+                        $set[$encrypt] = $this->aesCrypter->encrypt($set[$encrypt]);
+                    }
                 }
             }
         } else {
@@ -171,7 +176,10 @@ trait SecurityTrait
                     continue;
                 }
                 if (is_string($set->{$encrypt}) && $set->{$encrypt}) {
-                    $set->{$encrypt} = $this->aesCrypter->encrypt($set->{$encrypt});
+                    $string = $set->{$encrypt};
+                    if (! isGarbled($string)) {
+                        $set->{$encrypt} = $this->aesCrypter->encrypt($string);
+                    }
                 }
             }
         }
@@ -240,14 +248,16 @@ trait SecurityTrait
         if (is_string($data)) {
             return $this->aesCrypter->decrypt($data);
         }
-        if($this->table == "CK_contact") {
+        if ($this->table == "CK_contact") {
             debug($data);
         }
         if (is_array($data)) {
             foreach ($data as $key => &$value) {
-                if(array_search($key, $encryptionColumns) !== false || preg_match('/_email|_fax|_tel|_phone$/', $key)) {
+                if (array_search($key, $encryptionColumns) !== false || preg_match('/_email|_fax|_tel|_phone$/', $key)) {
                     if ($value) {
-                        $value = $this->aesCrypter->decrypt($value);
+                        if (isGarbled($value)) {
+                            $value = $this->aesCrypter->decrypt($value);
+                        }
                     }
                 }
             }
@@ -255,6 +265,9 @@ trait SecurityTrait
             foreach ($encryptionColumns as $column) {
                 if (isset($data->{$column}) && $data->{$column}) {
                     $value = $data->{$column};
+                    if (isGarbled($value)) {
+                        $value = $this->aesCrypter->decrypt($value);
+                    }
                     $value = $this->aesCrypter->decrypt($value);
                     $data->{$column} = $value;
                 }
