@@ -25,7 +25,7 @@ if (! function_exists('config') && is_file('config/config.php')) {
     }
 
     function isGarbled($str) {
-        return json_encode($str) === null;
+        return !json_encode($str);
     }
 
     function getAppEnvConstant()

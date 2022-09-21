@@ -248,9 +248,6 @@ trait SecurityTrait
         if (is_string($data)) {
             return $this->aesCrypter->decrypt($data);
         }
-        if ($this->table == "CK_contact") {
-            debug($data);
-        }
         if (is_array($data)) {
             foreach ($data as $key => &$value) {
                 if (array_search($key, $encryptionColumns) !== false || preg_match('/_email|_fax|_tel|_phone$/', $key)) {

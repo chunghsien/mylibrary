@@ -204,7 +204,23 @@ class DB
                                     }
                                 }
                             }
-                        } else {
+                        } else if($method == 'order'){
+                            if(substr_count($params[0], '[') > 1){
+                                $newParams = explode(' ', $params[0]);
+                                foreach ($newParams as $item){
+                                    $itemArr = json_decode($item);
+                                    if($itemArr){
+                                        $orderExpresssive = $itemArr[0].' '.$itemArr[1];
+                                        $select->order($orderExpresssive);
+                                    }
+                                }
+                            }else{
+                                call_user_func_array([
+                                    $select,
+                                    $method
+                                ], $params);
+                            }
+                        }else {
                             call_user_func_array([
                                 $select,
                                 $method
@@ -321,9 +337,11 @@ class DB
             unset($paginatorParams);
 
             $paginator->setCurrentPageNumber($currentPageNumber);
+            $pages = $paginator->getPages();
+            $pages->pagesInRange = array_values($pages->pagesInRange);
             $result = [
                 'items' => (array) $paginator->getCurrentItems(),
-                'pages' => $paginator->getPages()
+                'pages' => $pages
             ];
             $tableRawState =  $select->getRawState('table');
             if(is_array($tableRawState)) {
