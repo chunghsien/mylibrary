@@ -315,7 +315,7 @@ class DB
     {
         $adapter = $this->adapter;
         $sql = new Sql($adapter);
-        if ($_ENV["APP_ENV"] == 'test') {
+        if ($_ENV["APP_ENV"] != 'production') {
             logger()->debug($sql->buildSqlString($select));
         }
         if (is_int($currentPageNumber)) {
