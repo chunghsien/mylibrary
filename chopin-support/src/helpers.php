@@ -14,6 +14,17 @@ use Psr\Http\Message\ServerRequestInterface;
 
 if (! function_exists('config') && is_file('config/config.php')) {
 
+    /**
+     * @desc 代入年跟月求當月有幾天
+     * @param int $year
+     * @param int $month
+     * @return int
+     */
+    function daysInTheMonth($year, $month)
+    {
+        return \Chopin\Support\DateTools::daysInTheMonth($year, $month);
+    }
+
     function realClientSideUri($uri = '')
     {
         if (! defined('CLIENT_SIDE_LOCALE')) {

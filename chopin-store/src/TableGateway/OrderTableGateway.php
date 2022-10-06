@@ -7,7 +7,6 @@ use Laminas\Db\Sql\Where;
 use Laminas\Validator\AbstractValidator;
 use Psr\Http\Message\ServerRequestInterface;
 use Chopin\LaminasDb\DB\Traits\SecurityTrait;
-use Laminas\Db\Sql\Expression;
 use Laminas\I18n\Translator\Translator;
 use Chopin\LanguageHasLocale\TableGateway\LanguageHasLocaleTableGateway;
 use Laminas\I18n\Translator\TranslatorInterface;
