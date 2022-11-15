@@ -8,9 +8,11 @@ use Chopin\LaminasDb\TableGateway\AbstractTableGateway;
 use Laminas\Db\Sql\Predicate\Predicate;
 use Laminas\Db\ResultSet\ResultSet;
 use Laminas\Db\Sql\Where;
-use Laminas\Cache\StorageFactory;
+use Laminas\Cache\Service\StorageAdapterFactory;
 use Laminas\Cache\Storage\StorageInterface;
 use Laminas\Db\Adapter\Adapter;
+use Laminas\ServiceManager\ServiceManager;
+use Laminas\Cache\Service\StorageCacheAbstractServiceFactory;
 
 abstract class DbCacheMapperTableGateway
 {
@@ -71,12 +73,16 @@ abstract class DbCacheMapperTableGateway
             $cfg = config('caches.' . StorageInterface::class);
             if ($cfg) {
                 /**
+                 * 
+                 * @var ServiceManager $serviceContainer
+                 */
+                $serviceContainer = \Chopin\Support\Registry::get(ServiceManager::class);
+                /**
                  *
                  * @var \Laminas\Cache\Storage\Adapter\Filesystem $cacheAdapter
                  */
-                $cacheAdapter = StorageFactory::factory($cfg);
+                $cacheAdapter = $serviceContainer->get(StorageInterface::class);
                 $predicate = new Where();
-
                 $predicate->like('table', "%-{$tablename}-%");
                 $predicate->OR;
                 $predicate->equalTo('table', '*');
