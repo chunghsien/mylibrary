@@ -60,8 +60,12 @@ class LayoutZonesTableGateway extends AbstractTableGateway
     {
         $merge = [];
         foreach ($navigation as $item) {
-            foreach ($item["child"]["data"] as $child) {
-                $merge[] = $child;
+            if(isset($item["child"])){
+                foreach ($item["child"]["data"] as $child) {
+                    $merge[] = $child;
+                }
+            }else {
+                $merge[] = $item;
             }
         }
         return $merge;
