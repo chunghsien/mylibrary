@@ -334,15 +334,16 @@ class OrderTableGateway extends AbstractTableGateway
         $translator = AbstractValidator::getDefaultTranslator();
         $subSelect = $this->decryptSubSelectRaw;
         $select = new Select();
+        $decryptTable = $this->getDecryptTable();
         $select->from([
-            $this->getDecryptTable() => $subSelect
+            $decryptTable => $subSelect
         ]);
         $paymentTableGateway = new PaymentTableGateway($this->adapter);
-        $select->join($paymentTableGateway->table, "{$paymentTableGateway->table}.id=decrypt_order.payment_id", [
+        $select->join($paymentTableGateway->table, "{$paymentTableGateway->table}.id={$decryptTable}.payment_id", [
             "payment_name" => "name",
         ]);
         $logisticsGlobalTableGateway = new LogisticsGlobalTableGateway($this->adapter);
-        $select->join($logisticsGlobalTableGateway->table, "{$logisticsGlobalTableGateway->table}.id=decrypt_order.logistics_global_id", [
+        $select->join($logisticsGlobalTableGateway->table, "{$logisticsGlobalTableGateway->table}.id={$decryptTable}.logistics_global_id", [
             "logistics_name" => "name",
         ]);
 

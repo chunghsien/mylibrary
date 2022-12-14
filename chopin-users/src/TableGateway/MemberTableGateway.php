@@ -34,21 +34,28 @@ class MemberTableGateway extends AbstractTableGateway
         if ($idUse == true) {
             if (!$isAll) {
                 $newColumns = [
-                    "id" => $allColumns["id"],
-                    "email" => $allColumns["email"],
-                    "temporay_password" => $allColumns["temporay_password"],
-                    "verify_expire" => $allColumns["verify_expire"],
-                    "deleted_at" => $allColumns["deleted_at"],
+                    "id",
+                    "email" => $allColumns['email'],
+                    "password",
+                    "salt",
+                    "temporay_password",
+                    "verify_expire",
+                    "deleted_at",
                 ];
+                $subSelect->reset('columns');
                 $subSelect->columns($newColumns);
             }
         } else {
             $newColumns = [
-                "email" => $allColumns["email"],
-                "temporay_password" => $allColumns["temporay_password"],
-                "verify_expire" => $allColumns["verify_expire"],
-                "deleted_at" => $allColumns["deleted_at"],
+                "id",
+                "email" => $allColumns['email'],
+                "password",
+                "salt",
+                "temporay_password",
+                "verify_expire",
+                "deleted_at",
             ];
+            $subSelect->reset('columns');
             $subSelect->columns($newColumns);
         }
         $select = new Select();
