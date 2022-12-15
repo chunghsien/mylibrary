@@ -1,11 +1,11 @@
 {
   "name": "chunghsien/chopin",
   "description": "自己專案的架構基於laminas project 的延伸應用",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "project",
   "license": "BSD 3-Clause License",
   "require": {
-    "php": "^7.4 || ~8.0.0 || ~8.1.0"
+    "php": "^8.0.0"
   },
   "autoload": {
     "files": [

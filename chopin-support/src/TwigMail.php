@@ -1,5 +1,4 @@
 <?php
-
 namespace Chopin\Support;
 
 use Laminas\Mail\Message as MailMessage;
@@ -45,9 +44,8 @@ abstract class TwigMail
         $orderFullname = InfomationMask::mask($orderFullname, 1, 1);
         $recepientFullName = InfomationMask::mask($recepientFullName, 1, 1);
         $recepientAddress = InfomationMask::mask($recepientAddress, 3, 3);
-        
-        if (preg_match('/^zh/', $indexLang)) {
-        }
+
+        if (preg_match('/^zh/', $indexLang)) {}
         $template["vars"]["member"]["full_name"] = $orderFullname;
         $template["vars"]["order"]["fullname"] = $recepientFullName;
         $template["vars"]["order"]["cellphone"] = $recepientCellphone;
@@ -64,8 +62,7 @@ abstract class TwigMail
         if ($memberMail != $orderMail) {
             $to[] = $orderMail;
         }
-        $mailConfig = $pageConfig["system_settings"]["mail-service"]["to_config"];
-
+        $mailConfig = $pageConfig["system_settings"]["mail_service"]["to_config"];
         $serviceEmail = $siteInfoConfig["email"];
         $serviceName = $siteInfoConfig["email_service_from_name"];
         self::mail([
@@ -151,15 +148,17 @@ abstract class TwigMail
                     }
                     continue;
                 }
-                if ($func == "setFrom") {
+                if ($func == "setFrom" && $param[0]) {
                     $mail->setFrom(trim($param[0]), $param[1]);
                     continue;
                 }
                 if (is_array($param)) {
-                    call_user_func_array([
-                        $mail,
-                        $func
-                    ], $param);
+                    if ($mail->getFrom()->count() > 0 && $func) {
+                        call_user_func_array([
+                            $mail,
+                            $func
+                        ], $param);
+                    }
                 }
                 if (is_string($param)) {
                     $mail->{$func}($param);

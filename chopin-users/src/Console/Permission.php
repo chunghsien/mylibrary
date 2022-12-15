@@ -44,10 +44,10 @@ class Permission extends Command
     {
         $source = $input->getOption('source');
         if (is_file($source)) {
-            $configs = require $source;
-            $navigation = new Navigation($configs);
-            $recursiveIteratorIterator = new \RecursiveIteratorIterator($navigation, \RecursiveIteratorIterator::SELF_FIRST);
             try {
+                $configs = require $source;
+                $navigation = new Navigation($configs);
+                $recursiveIteratorIterator = new \RecursiveIteratorIterator($navigation, \RecursiveIteratorIterator::SELF_FIRST);
                 foreach ($recursiveIteratorIterator as $page) {
                     if ($page->uri != '#') {
                         if ($this->tablegateway->select([
@@ -73,7 +73,7 @@ class Permission extends Command
             } catch (\Exception $e) {
                 loggerException($e);
                 //throw $e;
-                $output->writeln("<error>$e->getMessage()</error>");
+                $output->writeln("<error>{$e->getMessage()}</error>");
                 return 0;
             }
         } else {
