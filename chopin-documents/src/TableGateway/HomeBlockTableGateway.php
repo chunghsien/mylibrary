@@ -6,11 +6,6 @@ use Chopin\LaminasDb\TableGateway\AbstractTableGateway;
 use Psr\Http\Message\ServerRequestInterface;
 use Laminas\Db\Sql\Where;
 
-/**
- * @deprecated
- * @author hsien
- *
- */
 class HomeBlockTableGateway extends AbstractTableGateway
 {
     public static $isRemoveRowGatewayFeature = false;
