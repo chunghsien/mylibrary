@@ -207,15 +207,18 @@ class ProductsTableGateway extends AbstractTableGateway
                 }
             }
         }
-        $productsCombinationTableGateway = new ProductsCombinationTableGateway($this->adapter);
-        // $productsSpecTableGateway = new ProductsSpecTableGateway($this->adapter);
-        $select->join($productsCombinationTableGateway->table, "{$productsCombinationTableGateway->table}.products_id={$this->table}.id", [
-            "price",
-            "real_price"
-        ], Join::JOIN_LEFT);
-        $select->group("{$productsCombinationTableGateway->table}.products_id");
+        if(config('lezada.products.products_combination_price_use')){
+            $productsCombinationTableGateway = new ProductsCombinationTableGateway($this->adapter);
+            // $productsSpecTableGateway = new ProductsSpecTableGateway($this->adapter);
+            $select->join($productsCombinationTableGateway->table, "{$productsCombinationTableGateway->table}.products_id={$this->table}.id", [
+                "price",
+                "real_price"
+            ], Join::JOIN_LEFT);
+            $select->group("{$productsCombinationTableGateway->table}.products_id");
+            $where->greaterThan("{$productsCombinationTableGateway->table}.real_price", 0);
+        }
         $select->order($orderBy);
-        $where->greaterThan("{$productsCombinationTableGateway->table}.real_price", 0);
+        
         $select->where($where);
         DB::mysql8HigherGroupByFix();
         $pagiAdapter = new DbSelect($select, $this->adapter);

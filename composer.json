@@ -1,7 +1,7 @@
 {
   "name": "chunghsien/chopin",
   "description": "自己專案的架構基於laminas project 的延伸應用",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "type": "project",
   "license": "BSD 3-Clause License",
   "require": {
