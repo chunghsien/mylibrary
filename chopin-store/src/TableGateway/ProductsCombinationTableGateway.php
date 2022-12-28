@@ -1,5 +1,4 @@
 <?php
-
 namespace Chopin\Store\TableGateway;
 
 use Chopin\LaminasDb\TableGateway\AbstractTableGateway;
@@ -13,6 +12,7 @@ use Chopin\SystemSettings\TableGateway\AssetsTableGateway;
 
 class ProductsCombinationTableGateway extends AbstractTableGateway
 {
+
     public static $isRemoveRowGatewayFeature = false;
 
     /**
@@ -249,7 +249,7 @@ class ProductsCombinationTableGateway extends AbstractTableGateway
         return $row->toArray();
     }
 
-    public function getOptionsContainer($language_id, $locale_id, $productInclude=false)
+    public function getOptionsContainer($language_id, $locale_id, $productInclude = false)
     {
         return [
             "products" => $productInclude ? $this->getProductsOptions($language_id, $locale_id) : [],

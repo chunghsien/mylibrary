@@ -263,6 +263,7 @@ class ProductsTableGateway extends AbstractTableGateway
             "id",
             "manufactures_id",
             "model",
+            "alias",
             "introduction",
             "is_new",
             "is_hot",
