@@ -182,7 +182,8 @@ class CartTableGateway extends AbstractTableGateway
             ], Join::JOIN_LEFT);
         }
         $select->join($productsTableGateway->table, "{$productsCombinationTableGateway->table}.products_id={$productsTableGateway->table}.id", [
-            'model'
+            'model',
+            'alias'
         ]);
 
         $select->join($productsDiscountTableGateway->table, "{$this->table}.products_combination_id={$productsDiscountTableGateway->table}.products_combination_id", [

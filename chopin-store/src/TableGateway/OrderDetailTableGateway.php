@@ -24,10 +24,15 @@ class OrderDetailTableGateway extends AbstractTableGateway
      */
     public function getDetailResult($orderId, $getProdAsset=false)
     {
+        $productsTableGateway = new ProductsTableGateway($this->adapter);
         $where = new Where();
         $where->equalTo("order_id", $orderId);
-        $where->isNull("deleted_at");
-        $result = $this->select($where)->toArray();
+        $where->isNull("{$this->table}.deleted_at");
+        $where->isNull("{$productsTableGateway->table}.deleted_at");
+        $select = $this->sql->select();
+        $select->join($productsTableGateway->table, "{$productsTableGateway->table}.id={$this->table}.products_id", ['alias']);
+        $select->where($where);
+        $result = $this->selectWith($select)->toArray();
         if ($getProdAsset) {
             $assetsTableGateway = new AssetsTableGateway($this->adapter);
             foreach ($result as &$item) {

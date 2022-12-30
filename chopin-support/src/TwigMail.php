@@ -37,7 +37,7 @@ abstract class TwigMail
         $translator->setLocale($request->getAttribute('php_lang'));
         Registry::set('laminasTranslator', $translator);
         // logger()->debug(json_encode($template["vars"], JSON_UNESCAPED_UNICODE));
-        $orderFullname = $member["full_name"];
+        $orderFullname = $member["full_name"] ?? $order["fullname"];
         $recepientFullName = $order["fullname"];
         $recepientCellphone = InfomationMask::mask($order["cellphone"], 2, 2);
         $recepientAddress = $order["address"];
@@ -98,106 +98,111 @@ abstract class TwigMail
          * ],
          * ];
          */
-        $path = $options['template']['path'];
-        $name = $options['template']['name'];
-        $loader = new FilesystemLoader($path);
-        $twig = new Environment($loader);
-        $twig->addExtension(new \App\TwigExtension\Translator());
-        $vars = $options['template']['vars'];
-        $htmlMarkup = $twig->render($name, $vars);
-        file_put_contents('./storage/recive_order.html', $htmlMarkup);
-        $html = new MimePart($htmlMarkup);
-        $html->type = Mime::TYPE_HTML;
-        $html->charset = 'utf-8';
-        $html->encoding = Mime::ENCODING_QUOTEDPRINTABLE;
-        // echo $htmlMarkup;
-        // exit();
-        $body = new MimeMessage();
-        $body->addPart($html);
-        $mail = new MailMessage();
-        $mail->getHeaders()->setEncoding('UTF-8');
-        $mail->setBody($body);
-        if ($headLines) {
-            $headers = $mail->getHeaders();
-            foreach ($headLines as $headLine) {
-                $headers->addHeaderLine($headLine[0], $headLine[1]);
+        try {
+            $path = $options['template']['path'];
+            $name = $options['template']['name'];
+            $loader = new FilesystemLoader($path);
+            $twig = new Environment($loader);
+            $twig->addExtension(new \App\TwigExtension\Translator());
+            $vars = $options['template']['vars'];
+            $htmlMarkup = $twig->render($name, $vars);
+            file_put_contents('./storage/recive_order.html', $htmlMarkup);
+            $html = new MimePart($htmlMarkup);
+            $html->type = Mime::TYPE_HTML;
+            $html->charset = 'utf-8';
+            $html->encoding = Mime::ENCODING_QUOTEDPRINTABLE;
+            // echo $htmlMarkup;
+            // exit();
+            $body = new MimeMessage();
+            $body->addPart($html);
+            $mail = new MailMessage();
+            $mail->getHeaders()->setEncoding('UTF-8');
+            $mail->setBody($body);
+            if ($headLines) {
+                $headers = $mail->getHeaders();
+                foreach ($headLines as $headLine) {
+                    $headers->addHeaderLine($headLine[0], $headLine[1]);
+                }
             }
-        }
-        $allowParams = [
-            'from',
-            'to',
-            'subject',
-            'cc',
-            'bcc',
-            'reply_to'
-        ];
-        $underscoreToCamelCase = new UnderscoreToCamelCase();
-        foreach ($options as $key => $param) {
-            if (false !== array_search($key, $allowParams, true)) {
-                $func = 'set' . ucfirst($underscoreToCamelCase->filter($key));
-                if ($func == 'setTo') {
-                    foreach ($param as $to) {
-                        if (is_array($to)) {
+            $allowParams = [
+                'from',
+                'to',
+                'subject',
+                'cc',
+                'bcc',
+                'reply_to'
+            ];
+            $underscoreToCamelCase = new UnderscoreToCamelCase();
+            foreach ($options as $key => $param) {
+                if (false !== array_search($key, $allowParams, true)) {
+                    $func = 'set' . ucfirst($underscoreToCamelCase->filter($key));
+                    if ($func == 'setTo') {
+                        foreach ($param as $to) {
+                            if (is_array($to)) {
+                                call_user_func_array([
+                                    $mail,
+                                    'setTo'
+                                ], $to);
+                            } else {
+                                $mail->setTo($to);
+                            }
+                        }
+                        continue;
+                    }
+                    if ($func == "setFrom" && $param[0]) {
+                        $mail->setFrom(trim($param[0]), $param[1]);
+                        continue;
+                    }
+                    if (is_array($param)) {
+                        if ($mail->getFrom()->count() > 0 && $func) {
                             call_user_func_array([
                                 $mail,
-                                'setTo'
-                            ], $to);
-                        } else {
-                            $mail->setTo($to);
+                                $func
+                            ], $param);
                         }
                     }
-                    continue;
-                }
-                if ($func == "setFrom" && $param[0]) {
-                    $mail->setFrom(trim($param[0]), $param[1]);
-                    continue;
-                }
-                if (is_array($param)) {
-                    if ($mail->getFrom()->count() > 0 && $func) {
-                        call_user_func_array([
-                            $mail,
-                            $func
-                        ], $param);
+                    if (is_string($param)) {
+                        $mail->{$func}($param);
                     }
                 }
-                if (is_string($param)) {
-                    $mail->{$func}($param);
-                }
             }
-        }
-        $trsnsport = null;
-        if (preg_match("/sendmail$/", $options['transport']['mail_method']) || $options['transport']['mail_method'] == 'none') {
-            $trsnsport = new Sendmail();
-        }
-
-        if ($options['transport']['mail_method'] == 'smtp') {
-            $trsnsport = new SmtpTransport();
-            $transportOptions = [];
-            foreach ($options['transport'] as $key => $value) {
-                switch ($key) {
-                    case "name":
-                    case "host":
-                    case "port":
-                        if ($value) {
-                            $transportOptions[$key] = $value;
-                        }
-                        break;
-                    case "ssl":
-                    case "username":
-                    case "password":
-                        if (empty($transportOptions["connection_class"])) {
-                            $transportOptions["connection_class"] = \Laminas\Mail\Protocol\Smtp\Auth\Login::class;
-                        }
-                        if (empty($transportOptions["connection_config"])) {
-                            $transportOptions["connection_config"] = [];
-                        }
-                        $transportOptions["connection_config"][$key] = $value;
-                        break;
-                }
+            $trsnsport = null;
+            if (preg_match("/sendmail$/", $options['transport']['mail_method']) || $options['transport']['mail_method'] == 'none') {
+                $trsnsport = new Sendmail();
             }
-            $smtpOptions = new SmtpOptions($transportOptions);
-            $trsnsport->setOptions($smtpOptions);
+            
+            if ($options['transport']['mail_method'] == 'smtp') {
+                $trsnsport = new SmtpTransport();
+                $transportOptions = [];
+                foreach ($options['transport'] as $key => $value) {
+                    switch ($key) {
+                        case "name":
+                        case "host":
+                        case "port":
+                            if ($value) {
+                                $transportOptions[$key] = $value;
+                            }
+                            break;
+                        case "ssl":
+                        case "username":
+                        case "password":
+                            if (empty($transportOptions["connection_class"])) {
+                                $transportOptions["connection_class"] = \Laminas\Mail\Protocol\Smtp\Auth\Login::class;
+                            }
+                            if (empty($transportOptions["connection_config"])) {
+                                $transportOptions["connection_config"] = [];
+                            }
+                            $transportOptions["connection_config"][$key] = $value;
+                            break;
+                    }
+                }
+                $smtpOptions = new SmtpOptions($transportOptions);
+                $trsnsport->setOptions($smtpOptions);
+            }
+            $trsnsport->send($mail);
+        } catch (\Exception $e) {
+            logger()->err($e->getMessage(), $e->getTrace());
         }
-        $trsnsport->send($mail);
+        
     }
 }

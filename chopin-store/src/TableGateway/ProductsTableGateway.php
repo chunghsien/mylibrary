@@ -1,5 +1,4 @@
 <?php
-
 namespace Chopin\Store\TableGateway;
 
 use Chopin\LaminasDb\TableGateway\AbstractTableGateway;
@@ -19,6 +18,7 @@ use Chopin\LanguageHasLocale\TableGateway\LanguageHasLocaleTableGateway;
 
 class ProductsTableGateway extends AbstractTableGateway
 {
+
     public static $isRemoveRowGatewayFeature = false;
 
     public static $isJoinProductsRating = false;
@@ -65,16 +65,22 @@ class ProductsTableGateway extends AbstractTableGateway
             });
         }
         $options = array_values($options);
-        if($id) {
-            $row = $this->select(["id" => $id])->current();
-            if($row) {
+        if ($id) {
+            $row = $this->select([
+                "id" => $id
+            ])->current();
+            if ($row) {
                 $languageHasLocaleTableGateway = new LanguageHasLocaleTableGateway($this->adapter);
-                $languageHasLocaleRow = $languageHasLocaleTableGateway->select(["language_id" => $row->language_id, "locale_id" => $row->locale_id])->current();
+                $languageHasLocaleRow = $languageHasLocaleTableGateway->select([
+                    "language_id" => $row->language_id,
+                    "locale_id" => $row->locale_id
+                ])->current();
                 /**
+                 *
                  * @var \Laminas\I18n\Translator\Translator $laminasTranslator
                  */
                 $laminasTranslator = Registry::get('laminasTranslator');
-                $laminasTranslator->addTranslationFile('phpArray', PROJECT_DIR.'/resources/languages', '%s/translation.php');
+                $laminasTranslator->addTranslationFile('phpArray', PROJECT_DIR . '/resources/languages', '%s/translation.php');
                 $locale = $languageHasLocaleRow->code;
                 $laminasTranslator->setLocale($locale);
                 foreach ($options as &$item) {
@@ -96,7 +102,7 @@ class ProductsTableGateway extends AbstractTableGateway
         unset($orders);
         return [
             "tabs" => $tabs,
-            "contents" => $contents,
+            "contents" => $contents
         ];
     }
 
@@ -207,18 +213,17 @@ class ProductsTableGateway extends AbstractTableGateway
                 }
             }
         }
-        if(config('lezada.products.products_combination_price_use')){
-            $productsCombinationTableGateway = new ProductsCombinationTableGateway($this->adapter);
-            // $productsSpecTableGateway = new ProductsSpecTableGateway($this->adapter);
-            $select->join($productsCombinationTableGateway->table, "{$productsCombinationTableGateway->table}.products_id={$this->table}.id", [
-                "price",
-                "real_price"
-            ], Join::JOIN_LEFT);
-            $select->group("{$productsCombinationTableGateway->table}.products_id");
-            $where->greaterThan("{$productsCombinationTableGateway->table}.real_price", 0);
-        }
+        // if(config('lezada.products.products_combination_price_use')){
+        $productsCombinationTableGateway = new ProductsCombinationTableGateway($this->adapter);
+        $select->join($productsCombinationTableGateway->table, "{$productsCombinationTableGateway->table}.products_id={$this->table}.id", [
+            "price",
+            "real_price"
+        ], Join::JOIN_LEFT);
+        $select->group("{$productsCombinationTableGateway->table}.products_id");
+        $where->greaterThan("{$productsCombinationTableGateway->table}.real_price", 0);
+        // }
         $select->order($orderBy);
-        
+
         $select->where($where);
         DB::mysql8HigherGroupByFix();
         $pagiAdapter = new DbSelect($select, $this->adapter);
@@ -295,7 +300,7 @@ class ProductsTableGateway extends AbstractTableGateway
         ], "LEFT");
 
         if (self::$isJoinProductsRating == true) {
-            $adapter = $this->sql->getAdapter();
+            // $adapter = $this->sql->getAdapter();
             DB::mysql8HigherGroupByFix();
             $select->join("{$pt}products_rating", "{$this->table}.id={$pt}products_rating.products_id", [
                 "rating"
@@ -521,13 +526,13 @@ class ProductsTableGateway extends AbstractTableGateway
                 foreach ($layoutZonesResultset as $layoutZonesRow) {
                     $vars["breadAppend"][] = [
                         "id" => 0,
-                        "name" => $layoutZonesRow->name,
+                        "name" => $layoutZonesRow->name
                     ];
                 }
             } else {
                 $vars["breadAppend"][] = [
                     "id" => 0,
-                    "name" => i18nStaticTranslator('All products', 'site-translation'),
+                    "name" => i18nStaticTranslator('All products', 'site-translation')
                 ];
             }
             unset($layoutZonesResultset);
