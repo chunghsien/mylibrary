@@ -353,7 +353,8 @@ class OrderTableGateway extends AbstractTableGateway
         $select->order("id desc");
         $where = new Where();
         $where->equalTo("member_id", $users_id);
-        $where->isNull("deleted_at");
+        $where->isNull("{$decryptTable}.deleted_at");
+        $select->where($where);
         $dataSource = $this->sql->prepareStatementForSqlObject($select)->execute();
         $resultSet = new ResultSet();
         $resultSet->initialize($dataSource);
