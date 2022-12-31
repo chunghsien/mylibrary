@@ -35,6 +35,7 @@ return [
     "other_ship_refrigeration_stock_up" => "備貨中(大型冷藏貨物)",
     "other_ship_freezer_stock_up" => "備貨中(大型冷凍貨物)",
     "order_no_status" => "訂單建立(未付款)",
+    "pay_confirm" => "轉帳付款確認中",
     "order_paid" => "完成付款",
     "simulate_paid" => "模擬付款成功",
     "order_paid fail" => "付款程序失敗",
