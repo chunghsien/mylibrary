@@ -347,7 +347,7 @@ class DocumentsTableGateway extends AbstractTableGateway
                         $items[] = $npRow->toArray();
                     }
                     unset($npClassResultset);
-                    $productRow->name = $productRow->model;
+                    $productRow->name = $productRow->alias;
                     $items[] = $productRow;
                 }
             }
