@@ -64,17 +64,16 @@ class OrderTableGateway extends AbstractTableGateway
      */
     protected $status = [
         "order_no_status", // 訂單建立
-        "pay_confirm", //轉帳付款確認中
         "order_paid", // 付款完成(信用卡或相關綁定支付)
         "simulate_paid", // 模擬付款成功
-        "credit_account_paid", // 付款完成(信用卡或相關綁定支付)
-        "transfer_account_paid", // 轉帳付款完成(ATM轉帳相關)
+                          // "credit_account_paid", // 付款完成(信用卡或相關綁定支付)
+                          // "transfer_account_paid", // 轉帳付款完成(ATM轉帳相關)
         "stock_up", // 備貨中(完成對帳狀態，避免重複對帳造成)
         "other_ship_stock_up", // 大型貨物備貨(無法使用超商取貨或一般材積總和150cm以上的宅配寄送商品)
         "other_ship_refrigeration_stock_up", // 大型冷藏貨物備貨(無法使用超商取貨或一般材積總和120cm以上)
         "other_ship_freezer_stock_up", // 大型冷凍貨物備貨(無法使用超商取貨或一般材積總和120cm以上)
         "goods_sent_out", // 貨品已寄出
-        "goods_sent_out_and_unpaid", // 貨品已寄出(尚未付款)，僅適用超商取貨付款
+                           // "goods_sent_out_and_unpaid", // 貨品已寄出(尚未付款)，僅適用超商取貨付款
         "unexpected_situation", // 其他意外狀況
         "delivered_to_store", // 已到店，僅適用超商取貨或超商取貨付款
         "delivered_to_house", // 已到貨，交付管理室或轉至在地物流中心。
@@ -133,16 +132,6 @@ class OrderTableGateway extends AbstractTableGateway
             $this->translator->setLocale($locale);
             $filename = dirname(__DIR__, 2).'/resources/languages/' . $locale . "/chopin-store.php";
             $this->translator->addTranslationFile('phpArray', $filename, "chopin-store", $locale);
-        }
-        //如需在專案中做特殊訂單流程(可在./src/App/options/ignore/orderStatus.php 中做定義)
-        if(is_file('./src/App/options/ignore/orderStatus.php')){
-            $newStatus = require_once './src/App/options/ignore/orderStatus.php';
-            if($newStatus && isset($newStatus['status']) && $newStatus['status']){
-                $this->status = $newStatus['status'];
-            }
-            if($newStatus && isset($newStatus['reverse_status']) && $newStatus['reverse_status']){
-                $this->reverse_status = $newStatus['reverse_status'];
-            }
         }
     }
 
