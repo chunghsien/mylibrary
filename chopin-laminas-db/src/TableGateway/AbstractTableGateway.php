@@ -490,7 +490,6 @@ abstract class AbstractTableGateway extends LaminasTableGateway
         if ($this->getTailTableName() != 'system_settings' || empty($set["aes_value"])) {
             $reflection = new \ReflectionClass(get_class($this));
             $trits = array_keys($reflection->getTraits());
-
             if (false !== array_search(SecurityTrait::class, $trits, true)) {
                 $set = $this->securty($set);
             }

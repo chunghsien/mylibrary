@@ -38,7 +38,8 @@ trait SecurityTrait
         'address', // 住址
         'full_address', // 住址
         'aes_value',
-        "third_party_payment_params"
+        "third_party_payment_params",
+        "csvcom_params"
     ];
 
     /**
@@ -62,6 +63,15 @@ trait SecurityTrait
         return $this->aesCrypter;
     }
 
+    /**
+     * @desc 資料是否已被加密過
+     * @param string $str
+     * @return boolean
+     */
+    public function isEncrypted($str) {
+        return (bool) $this->aesCrypter->decrypt($str);
+    }
+    
     /**
      * *建立AES加密的子查詢樣式
      *
@@ -165,7 +175,7 @@ trait SecurityTrait
                 }
                 if (is_string($set[$encrypt]) && $set[$encrypt]) {
                     $string = $set[$encrypt];
-                    if (! isGarbled($string)) {
+                    if (! $this->isEncrypted($string)) {
                         $set[$encrypt] = $this->aesCrypter->encrypt($set[$encrypt]);
                     }
                 }
@@ -177,7 +187,7 @@ trait SecurityTrait
                 }
                 if (is_string($set->{$encrypt}) && $set->{$encrypt}) {
                     $string = $set->{$encrypt};
-                    if (! isGarbled($string)) {
+                    if (! $this->isEncrypted($string)) {
                         $set->{$encrypt} = $this->aesCrypter->encrypt($string);
                     }
                 }
@@ -252,7 +262,7 @@ trait SecurityTrait
             foreach ($data as $key => &$value) {
                 if (array_search($key, $encryptionColumns) !== false || preg_match('/_email|_fax|_tel|_phone$/', $key)) {
                     if ($value) {
-                        if (isGarbled($value)) {
+                        if ($this->isEncrypted($value)) {
                             $value = $this->aesCrypter->decrypt($value);
                         }
                     }
@@ -262,10 +272,12 @@ trait SecurityTrait
             foreach ($encryptionColumns as $column) {
                 if (isset($data->{$column}) && $data->{$column}) {
                     $value = $data->{$column};
-                    if (isGarbled($value)) {
+                    if ($this->isEncrypted($value)) {
                         $value = $this->aesCrypter->decrypt($value);
                     }
-                    $value = $this->aesCrypter->decrypt($value);
+                    if ($tmp = json_decode($value)) {
+                        $value = $tmp;
+                    }
                     $data->{$column} = $value;
                 }
             }

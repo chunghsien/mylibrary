@@ -11,6 +11,7 @@ use Chopin\LaminasDb\TableGateway\AbstractTableGateway;
 use Laminas\I18n\Translator\Translator;
 use Laminas\Cache\Storage\Adapter\Filesystem;
 use Psr\Http\Message\ServerRequestInterface;
+use NoProtocol\Encryption\MySQL\AES\Crypter;
 
 if (! function_exists('config') && is_file('config/config.php')) {
 
@@ -35,8 +36,15 @@ if (! function_exists('config') && is_file('config/config.php')) {
         return $return;
     }
 
-    function isGarbled($str) {
-        return !json_encode($str);
+    /**
+     * @deprecated
+     * @desc 資料是否已被加密過
+     * @param string $str
+     * @param Crypter $crypter
+     * @return bool
+     */
+    function isEncrypted($str, Crypter $crypter) {
+        return (bool) $crypter->decrypt($str);
     }
 
     function getAppEnvConstant()
