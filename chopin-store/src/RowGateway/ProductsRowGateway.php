@@ -211,6 +211,7 @@ class ProductsRowGateway extends RowGateway
         $select = $this->sql->select();
         $select->columns($columns);
         $where = new Where();
+        $where->equalTo('is_show', 1);
         $where->greaterThan($column, $value);
         $where->isNull("deleted_at");
         $select->order("{$column} ASC");
@@ -240,6 +241,7 @@ class ProductsRowGateway extends RowGateway
         $select->columns($columns);
         $where = new Where();
         $where->lessThan($column, $value);
+        $where->equalTo('is_show', 1);
         $where->isNull("deleted_at");
         $select->limit(1);
         $select->order("{$column} DESC");
