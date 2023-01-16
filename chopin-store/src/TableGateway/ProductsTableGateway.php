@@ -253,11 +253,21 @@ class ProductsTableGateway extends AbstractTableGateway
         }
         $paginator = $paginator->getPages();
         $paginator->pagesInRange = array_values($paginator->pagesInRange);
+
+        // begin of 製作上一筆下一筆的依據
+        $select->columns([ 'id' ]);
+        $nextAndPrevResultset = $this->selectWith($select);
+        $nextAndPrevContiners = [];
+        foreach ($nextAndPrevResultset as $nextAndPrevItem) {
+            $nextAndPrevContiners[] = $nextAndPrevItem->id;
+        }
+        // end of 製作上一筆下一筆的依據
         return [
             "products" => $result,
             "paginator" => [
                 "pages" => (array) $paginator
-            ]
+            ],
+            'nextAndPrevContiners' => $nextAndPrevContiners
         ];
     }
 

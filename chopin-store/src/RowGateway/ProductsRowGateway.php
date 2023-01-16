@@ -214,7 +214,7 @@ class ProductsRowGateway extends RowGateway
         $where->equalTo('is_show', 1);
         $where->greaterThan($column, $value);
         $where->isNull("deleted_at");
-        $select->order("{$column} ASC");
+        $select->order(["{$this->table}.sort ASC", "{$this->table}.id DESC"]);
         $select->limit(1);
         $productsTableGateway = new ProductsTableGateway($this->sql->getAdapter());
         $select->where($where);
@@ -244,7 +244,7 @@ class ProductsRowGateway extends RowGateway
         $where->equalTo('is_show', 1);
         $where->isNull("deleted_at");
         $select->limit(1);
-        $select->order("{$column} DESC");
+        $select->order(["{$this->table}.sort DESC", "{$this->table}.id DESC"]);
         $productsTableGateway = new ProductsTableGateway($this->sql->getAdapter());
         $select->where($where);
         $row = $productsTableGateway->selectWith($select)->current();
