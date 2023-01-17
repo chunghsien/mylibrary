@@ -261,13 +261,20 @@ class ProductsTableGateway extends AbstractTableGateway
         foreach ($nextAndPrevResultset as $nextAndPrevItem) {
             $nextAndPrevContiners[] = $nextAndPrevItem->id;
         }
+        /**
+         * 
+         * @var \Mezzio\Session\LazySession $sessionStorage
+         */
+        $sessionStorage = $request->getAttribute(\Mezzio\Session\SessionInterface::class);
+        $sessionStorage->set('nextAndPrevContiners', $nextAndPrevContiners);
+        unset($nextAndPrevContiners);
         // end of 製作上一筆下一筆的依據
         return [
             "products" => $result,
             "paginator" => [
                 "pages" => (array) $paginator
             ],
-            'nextAndPrevContiners' => $nextAndPrevContiners
+            'nextAndPrevContiners' => 1
         ];
     }
 
