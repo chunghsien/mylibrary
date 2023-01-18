@@ -1,0 +1,15 @@
+{
+    "name": "chunghsien/chopin-tcat",
+    "description": "chopin packages",
+    "authors": [
+        {
+            "name": "Jacky Cho",
+            "email": "wowowo.jacky@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Chopin\\Tcat\\": "src/"
+        }
+    }
+}
