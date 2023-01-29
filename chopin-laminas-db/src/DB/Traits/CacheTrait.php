@@ -11,6 +11,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Laminas\Cache\Storage\StorageInterface;
 use Mezzio\Router\RouteResult;
 use Chopin\Support\Registry;
+use Laminas\ServiceManager\ServiceManager;
 
 trait CacheTrait
 {
@@ -39,7 +40,10 @@ trait CacheTrait
                         }
                     }
                     $cacheAdapter = Registry::get(StorageInterface::class);
-
+                    if(!$cacheAdapter){
+                        $serviceContainer = Registry::get(ServiceManager::class);
+                        $cacheAdapter = $serviceContainer->get(StorageInterface::class);
+                    }
                     /**
                      * *先實作filecache就好，後面再來慢慢處理
                      *

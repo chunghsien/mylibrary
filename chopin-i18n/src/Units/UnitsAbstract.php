@@ -9,7 +9,15 @@ abstract class UnitsAbstract
     protected $shortNames;
     protected $longNames;
     protected $defult;
-
+    
+    public function getShortNameOptions() {
+        $options = [];
+        foreach ($this->shortNames as $shortName) {
+            $options[] = ["label" => $shortName, "value" => $shortName];
+        }
+        return $options;
+    }
+    
     /**
      *
      * @var int 四捨五入
