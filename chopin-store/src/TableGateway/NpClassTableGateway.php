@@ -59,7 +59,9 @@ class NpClassTableGateway extends AbstractTableGateway
             $where = new Where();
             $where->isNull("{$this->table}.deleted_at");
             $where->isNull("{$pt}products.deleted_at");
+            $select->order(["{$this->table}.sort ASC", "{$this->table}.id DESC"]);
             $select->group("np_class_id");
+            
             $select->where($where);
             $having = new Having();
             $having->greaterThanOrEqualTo("count_product", 1);
