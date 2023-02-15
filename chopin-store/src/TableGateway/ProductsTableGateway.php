@@ -15,6 +15,7 @@ use Laminas\Db\Sql\Join;
 use Chopin\LaminasDb\DB;
 use Chopin\Support\Registry;
 use Chopin\LanguageHasLocale\TableGateway\LanguageHasLocaleTableGateway;
+use Chopin\SystemSettings\TableGateway\AssetsTableGateway;
 
 class ProductsTableGateway extends AbstractTableGateway
 {
@@ -578,5 +579,27 @@ class ProductsTableGateway extends AbstractTableGateway
         $where->isNull("{$this->table}.deleted_at");
         $select->where($where);
         return $manufacturesTableGateway->selectWith($select)->toArray();
+    }
+    
+    public function getHosProducts(ServerRequestInterface $request, $limit=7)
+    {
+        $languageId = $request->getAttribute("language_id");
+        $localeId = $request->getAttribute("locale_id");
+        $select = $this->sql->select();
+        $select->order(['is_hot DESC', 'viewed_count ASC']);
+        $select->limit($limit);
+        $where = new Where();
+        $where->equalTo("{$this->table}.language_id", $languageId);
+        $where->equalTo("{$this->table}.locale_id", $localeId);
+        $where->isNull("{$this->table}.deleted_at");
+        $select->where($where);
+        $resultSet = $this->selectWith($select);
+        $result = [];
+        $assetsTableGateway = new AssetsTableGateway($this->adapter);
+        foreach ($resultSet as $row) {
+            $row->with('assets', $assetsTableGateway->getAssets('products', $row->id));
+            $result[] = $row->toArray();
+        }
+        return$result;
     }
 }
