@@ -51,6 +51,30 @@ class DB
      */
     protected static $staticTablegateway;
 
+    public static function mysqlSafeUpdateFix()
+    {
+        try {
+            $adapter = self::$staticAdapter;
+            if (!$adapter) {
+                self::$staticAdapter = GlobalAdapterFeature::getStaticAdapter();
+                $adapter = self::$staticAdapter;
+            }
+            /**
+             *
+             * @var \PDO $resource
+             */
+            $resource = $adapter->getDriver()->getConnection()->getResource();
+            if (strtolower($resource->getAttribute(\PDO::ATTR_DRIVER_NAME)) == "mysql") {
+                $mySqlVer = $resource->getAttribute(\PDO::ATTR_DRIVER_NAME).preg_replace('/\-(.*)$/', '', $resource->getAttribute(\PDO::ATTR_SERVER_VERSION));
+                $mySqlVer = preg_replace('/mysql/i', '', $mySqlVer);
+                $mySqlVer = floatval($mySqlVer);
+                $adapter->getDriver()->getConnection()->execute("SET SQL_SAFE_UPDATES=0;");
+            }
+        } catch (\Exception $e) {
+            loggerException($e);
+        }
+    }
+    
     /**
      * @desc 針對 Mysql8 關閉 ONLY_FULL_GROUP_BY的處理
      */

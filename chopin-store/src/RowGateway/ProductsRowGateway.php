@@ -151,7 +151,7 @@ class ProductsRowGateway extends RowGateway
         $this->with["sum_stock"] = intval($item['sum_stock']);
     }
 
-    public function withAssets()
+    public function withAssets($limit = null)
     {
         $productsId = $this->data["id"];
         $adapter = $this->sql->getAdapter();
@@ -163,6 +163,9 @@ class ProductsRowGateway extends RowGateway
         $predicate->equalTo('table_id', $productsId);
         $select->where($predicate);
         $select->order('sort asc, id asc');
+        if($limit && $limit > 0) {
+            $select->limit(1);
+        }
         $resultSet = $assetsTableGateway->selectWith($select);
         $withData = [];
         foreach ($resultSet as /*$key =>*/$row) {
