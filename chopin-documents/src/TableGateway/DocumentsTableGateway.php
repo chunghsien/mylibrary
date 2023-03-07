@@ -172,14 +172,10 @@ class DocumentsTableGateway extends AbstractTableGateway
                 $tmpItem = $layoutZonesRow->toArray();
                 $tmpItem["route"] = $requestUri;
                 unset($tmpItem["id"]);
-                $items = [
-                    $tmpItem,
-                ];
+                $items = [ $tmpItem, ];
             } else {
                 if (false === preg_match('/product$/', $row->index) && false === preg_match('/news$/', $row->index)) {
-                    $items = [
-                        $row->toArray(),
-                    ];
+                    $items = [ $row->toArray(), ];
                 }
             }
             if (preg_match('/news$/', $row->index)) {
@@ -569,6 +565,7 @@ class DocumentsTableGateway extends AbstractTableGateway
                 "home" => $homeRow->toArray(),
                 "current" => $current,
             ];
+            //debug($vars["bread"]);
         }
         return $vars;
     }

@@ -9,7 +9,11 @@ use Chopin\LaminasDb\RowGateway\RowGateway;
 
 //use Laminas\Db\Sql\Expression;
 //use Psr\Http\Message\ServerRequestInterface;
-
+/**
+ * @de
+ * @author User
+ *
+ */
 class ProductsDiscountTableGateway extends AbstractTableGateway
 {
     public static $isRemoveRowGatewayFeature = false;

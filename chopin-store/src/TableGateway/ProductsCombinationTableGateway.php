@@ -470,13 +470,15 @@ class ProductsCombinationTableGateway extends AbstractTableGateway
         $select->where($where);
         $result = [];
         $resultset = $this->selectWith($select);
-        $productsDiscountTableGateway = new ProductsDiscountTableGateway($this->adapter);
+        //$productsDiscountTableGateway = new ProductsDiscountTableGateway($this->adapter);
+        $discountGroupTableGateway = new DiscountGroupTableGateway($this->adapter);
+        
         foreach ($resultset as $row) {
             /**
              *
              * @var RowGateway $row
              */
-            $row = $productsDiscountTableGateway->getRowUseCombinationRow($row);
+            $row = $discountGroupTableGateway->getRowUseCombinationRow($row);
             $row = $this->withAssets($row);
             $result[] = $row->toArray();
         }

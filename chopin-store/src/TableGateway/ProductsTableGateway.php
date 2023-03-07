@@ -217,7 +217,7 @@ class ProductsTableGateway extends AbstractTableGateway
                     $select->join("{$pt}np_class", "{$pt}np_class_has_products.np_class_id={$pt}np_class.id", [], Join::JOIN_LEFT);
                     $select->join("{$pt}mp_class_has_np_class", "{$pt}np_class.id = {$pt}mp_class_has_np_class.np_class_id", [], Join::JOIN_LEFT);
                     $select->join("{$pt}mp_class", "{$pt}mp_class.id = {$pt}mp_class_has_np_class.mp_class_id", []);
-                    $select->join("{$pt}fp_class_has_mp_class", "{$pt}mp_class.id = {$pt}fp_class_has_mp_class.fp_class_id", [], Join::JOIN_LEFT);
+                    $select->join("{$pt}fp_class_has_mp_class", "{$pt}mp_class.id = {$pt}fp_class_has_mp_class.mp_class_id", [], Join::JOIN_LEFT);
                     $where->equalTo("{$pt}fp_class_has_mp_class.fp_class_id", $categoryId);
                 } elseif (preg_match("/^mp_class\-/", $methodOrId)) {
                     $select->join("{$pt}np_class", "{$pt}np_class_has_products.np_class_id={$pt}np_class.id", [], Join::JOIN_LEFT);
@@ -277,7 +277,33 @@ class ProductsTableGateway extends AbstractTableGateway
             $row->withRatingAvg();
             $row->withCombinationOptions();
             $row->withItemSumStock();
-            $result[] = $row->toArray();
+            $tmpItem = $row->toArray();
+            $priceArr = [];
+            $priceMin = 0;
+            $priceMax = 0;
+            $realPriceArr = [];
+            $realPriceMin = 0;
+            $realPriceMax = 0;
+            foreach ($tmpItem['combinationOptions'] as $option) {
+                if(isset($option['discount']) && $option['discount']) {
+                    $realPriceArr[] = $option['discount']['discount_price'];
+                }else{
+                    $realPriceArr[] = $option['real_price'];
+                }
+                $priceArr[] = $option['price'];
+            }
+            $realPriceMin = min($realPriceArr);
+            $realPriceMax = max($realPriceArr);
+            $realPriceArr = array_unique([$realPriceMin, $realPriceMax]);
+            $priceMin = min($priceArr);
+            $priceMax = max($priceArr);
+            $priceArr = array_unique([$priceMin, $priceMax]);
+            $tmpItem['price'] = $priceArr;
+            $tmpItem['real_price'] = $realPriceArr;
+            $result[] = $tmpItem;
+            unset($row);
+            unset($realPriceMin);
+            unset($realPriceMax);
         }
         unset($items);
         foreach ($result as $key => $productItem) {
