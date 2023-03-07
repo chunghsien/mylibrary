@@ -169,6 +169,7 @@ class ProductsTableGateway extends AbstractTableGateway
         $routeResult = $request->getAttribute(\Mezzio\Router\RouteResult::class);
         $pt = AbstractTableGateway::$prefixTable;
         $matchedParams = $routeResult->getMatchedParams();
+        $productsWhereIn = [];
         if ($routeResult->getMatchedRouteName() == "category" || (isset($matchedParams["action"]) && $matchedParams["action"] == 'category')) {
             $methodOrId = $request->getAttribute("methodOrId");
             $categoryId = null;
@@ -181,6 +182,35 @@ class ProductsTableGateway extends AbstractTableGateway
                 $tmp = explode("-", $methodOrId);
                 $categoryId = $tmp[1];
             }
+            $discountId = 0;
+            if (preg_match("/^discount\-/", $methodOrId)) {
+                $tmp = explode("-", $methodOrId);
+                $discountId = intval($tmp[1]);
+            }
+           
+            if($discountId > 0) {
+                $discountGroupTableGateway = new DiscountGroupTableGateway($this->adapter);
+                $discountGroupRow = $discountGroupTableGateway->select(['id' => $discountId])->current();
+                /*
+                $imagePathname = './public'.$discountGroupRow->image;
+                $imageHeight = 0;
+                if(is_file($imagePathname) && function_exists('getimagesize')) {
+                    $imageHeight = getimagesize($imagePathname)[1];
+                }
+                $discountGroupRow->with('imgHeight', $imageHeight);
+                */
+                $discountGroupHasProductsTableGateway = new DiscountGroupHasProductsTableGateway($this->adapter);
+                $discountGroupHasProductsSelect = $discountGroupHasProductsTableGateway->getSql()->select();
+                $discountGroupHasProductsSelect->columns([/*'discount_group_id', */'products_id']);
+                $discountGroupHasProductsSelect->quantifier('distinct');
+                $discountGroupHasProductsSelect->where(['discount_group_id' => $discountId]);
+                $discountGroupHasProductsResultset = $discountGroupHasProductsTableGateway->selectWith($discountGroupHasProductsSelect);
+                foreach ($discountGroupHasProductsResultset as $discountGroupHasProductsItem) {
+                    $productsWhereIn[] = $discountGroupHasProductsItem->products_id;
+                }
+                //$request->
+            }
+            
             $select->join("{$pt}np_class_has_products", "{$this->table}.id={$pt}np_class_has_products.products_id", [], Join::JOIN_LEFT);
             if ($categoryId) {
                 if (preg_match("/^fp_class\-/", $methodOrId)) {
@@ -222,7 +252,9 @@ class ProductsTableGateway extends AbstractTableGateway
         ], Join::JOIN_LEFT);
         $select->group("{$productsCombinationTableGateway->table}.products_id");
         $where->greaterThan("{$productsCombinationTableGateway->table}.real_price", 0);
-        // }
+        if($productsWhereIn) {
+            $where->in("{$productsCombinationTableGateway->table}.products_id", $productsWhereIn);
+        }
         $select->order($orderBy);
 
         $select->where($where);
@@ -275,7 +307,8 @@ class ProductsTableGateway extends AbstractTableGateway
             "paginator" => [
                 "pages" => (array) $paginator
             ],
-            'nextAndPrevContiners' => 1
+            'nextAndPrevContiners' => 1,
+            'discountGroupRow' => $discountGroupRow ?? null,
         ];
     }
 

@@ -555,14 +555,19 @@ class DocumentsTableGateway extends AbstractTableGateway
                     }
                 }
             }
+            $current = ($row instanceof RowGatewayInterface) ? $row->toArray() : $row;
+            $items = isset($items) ? $items : [$row->toArray()];
+            $discountGroupRow = $request->getAttribute('discountGroupRow');
+            //debug($discountGroupRow);
+            if($discountGroupRow instanceof RowGatewayInterface) {
+                $items[] = ['name' => $discountGroupRow->name];
+            }
             // debug(isset($items));
             $vars["bread"] = [
                 "top" => isset($items) ? $items[0] : [],
-                "items" => isset($items) ? $items : [
-                    $row->toArray()
-                ],
+                "items" => $items,
                 "home" => $homeRow->toArray(),
-                "current" => ($row instanceof RowGatewayInterface) ? $row->toArray() : $row,
+                "current" => $current,
             ];
         }
         return $vars;

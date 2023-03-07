@@ -3,11 +3,9 @@ namespace Chopin\Store\TableGateway;
 
 use Chopin\LaminasDb\TableGateway\AbstractTableGateway;
 use Laminas\Db\Sql\Where;
-use Chopin\Store\RowGateway\ProductsRowGateway;
-use Chopin\LaminasDb\RowGateway\RowGateway;
+use Psr\Http\Message\ServerRequestInterface;
 
 // use Laminas\Db\Sql\Expression;
-// use Psr\Http\Message\ServerRequestInterface;
 class DiscountGroupTableGateway extends AbstractTableGateway
 {
 
@@ -19,41 +17,43 @@ class DiscountGroupTableGateway extends AbstractTableGateway
      */
     protected $table = 'discount_group';
 
-    public function getCountdown()
+    public function getCountdown(ServerRequestInterface $request)
     {
-        $productsTableGateway = new ProductsTableGateway($this->adapter);
-        $select = $this->getSql()->select();
+        $languageId = $request->getAttribute('language_id', 119);
+        $localeId = $request->getAttribute('locale_id', 229);
         $where = new Where();
-        $where->equalTo("is_countdown", 1);
-        $where->isNull("{$this->table}.deleted_at");
-        $where->isNull("{$productsTableGateway->table}.deleted_at");
-        $now = date("Y-m-d H:i:s");
-        $where->lessThanOrEqualTo("start_stamp", $now);
-        $where->greaterThanOrEqualTo("end_stamp", $now);
+        $where->equalTo('visible', 1);
+        $where->equalTo('language_id', $languageId);
+        $where->equalTo('locale_id', $localeId);
+        $time = date("Y-m-d H:i:s");
+        $where->lessThan('start_stamp', $time);
+        $where->greaterThan('end_stamp', $time);
+        $select = $this->sql->select();
+        $select->order('sort ASC');
         $select->where($where);
-        $select->join($productsTableGateway->table, "{$this->table}.products_id={$productsTableGateway->table}.id", [
-            'model',
-            'alias',
-            'product_price' => 'price',
-            'product_real_price' => 'real_price'
-        ]);
         $resultSet = $this->selectWith($select);
-        $reuslt = [];
-
+        $result = [];
+        $discountGroupHasProductsTableGateway = new DiscountGroupHasProductsTableGateway($this->adapter);
+        
+        
+        /**
+         * @var \Chopin\LaminasDb\RowGateway\RowGateway $row
+         */
         foreach ($resultSet as $row) {
-            $productWhere = new Where();
-            $productWhere->equalTo("id", $row->products_id);
-            $productsResultSet = $productsTableGateway->select($productWhere);
-            $productsResult = [];
-            foreach ($productsResultSet as $productsRow) {
-                $productsRow->withAssets();
-                $productsRow->withCombinationOptions();
-                $productsResult[] = $productsRow->toArray();
+            $where = new Where();
+            $where->equalTo('discount_group_id', $row->id);
+            $resultSet2 = $discountGroupHasProductsTableGateway->select($where);
+            $row->with('products', $resultSet2);
+            /*
+            $imgPath = './public'.$row->image;
+            $imgHeight = 0;
+            if(is_file($imgPath) && function_exists('getimagesize')) {
+                $imgHeight = getimagesize($imgPath)[1];
             }
-            $row->with("products", $productsResult);
-            $reuslt[] = $row->toArray();
+            $row->with('imgHeight', $imgHeight);
+            */
+            $result[] = $row->toArray();
         }
-        unset($resultSet);
-        return $reuslt;
+        return $result;
     }
 }
