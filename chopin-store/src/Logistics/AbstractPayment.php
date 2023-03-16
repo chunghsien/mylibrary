@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * @desc 付款抽象類別
+ */
+
 declare(strict_types=1);
 
 namespace Chopin\Store\Logistics;

@@ -7,6 +7,7 @@ use Laminas\Db\Sql\Where;
 use Psr\Http\Message\ServerRequestInterface;
 use Laminas\Db\ResultSet\ResultSetInterface;
 use Laminas\Db\Sql\Join;
+use Chopin\Store\Logistics\LogisticsFactory;
 
 class LogisticsGlobalTableGateway extends AbstractTableGateway
 {
@@ -36,20 +37,6 @@ class LogisticsGlobalTableGateway extends AbstractTableGateway
         $language_id = $request->getAttribute('language_id');
         $locale_id = $request->getAttribute('locale_id');
         $select = $this->sql->select();
-        $couponHasLogisticsGlobalTableGateway = new CouponHasLogisticsGlobalTableGateway($this->adapter);
-        $couponTableGateway = new CouponTableGateway($this->adapter);
-        $select->join(
-            $couponHasLogisticsGlobalTableGateway->table,
-            "{$couponHasLogisticsGlobalTableGateway->table}.logistics_global_id={$this->table}.id",
-            [],
-            Join::JOIN_LEFT
-        );
-        $select->join(
-            $couponTableGateway->table,
-            "{$couponHasLogisticsGlobalTableGateway->table}.coupon_id={$couponTableGateway->table}.id",
-            ["target_value"],
-            Join::JOIN_LEFT
-        );
         $select->order([
             "sort asc",
             "{$this->table}.id asc"
@@ -57,7 +44,7 @@ class LogisticsGlobalTableGateway extends AbstractTableGateway
         $where = new Where();
         $where->equalTo('method', 'shipping');
         $where->isNull("{$this->table}.deleted_at");
-        $where->isNull("{$couponTableGateway->table}.deleted_at");
+        //$where->isNull("{$couponTableGateway->table}.deleted_at");
         $where->equalTo("{$this->table}.language_id", $language_id);
         $where->equalTo("{$this->table}.locale_id", $locale_id);
         if ($isUse < 2) {
@@ -68,7 +55,13 @@ class LogisticsGlobalTableGateway extends AbstractTableGateway
         if (self::$isOutputResultSet) {
             return $resultSet;
         }
-        $result = $resultSet->toArray();
+        $result = [];
+        foreach ($resultSet as $row) {
+            $code = $row->code;
+            $logisticsObj = LogisticsFactory::factory($code, $this->adapter);
+            $row->extra_params = $logisticsObj->withExtraParams($row->extra_params);
+            $result[] = $row->toArray();
+        }
         return $result;
     }
 

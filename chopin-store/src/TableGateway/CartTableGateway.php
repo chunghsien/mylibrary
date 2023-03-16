@@ -7,8 +7,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use Laminas\Db\Sql\Where;
 // use Chopin\Store\CouponRule\FreeShippingCouponRule;
 use Chopin\SystemSettings\TableGateway\AssetsTableGateway;
-use Laminas\Db\Sql\Expression;
 use Laminas\Db\Sql\Join;
+use Chopin\LaminasDb\DB;
 
 class CartTableGateway extends AbstractTableGateway
 {
@@ -156,7 +156,6 @@ class CartTableGateway extends AbstractTableGateway
         }
         $this->removeExpired($guest_serial);
         $productsTableGateway = new ProductsTableGateway($this->adapter);
-        $productsDiscountTableGateway = new ProductsDiscountTableGateway($this->adapter);
         $productsCombinationTableGateway = new ProductsCombinationTableGateway($this->adapter);
         $select = $this->getSql()->select();
         $select->join($productsCombinationTableGateway->table, "{$productsCombinationTableGateway->table}.id={$this->table}.products_combination_id", [
@@ -181,18 +180,21 @@ class CartTableGateway extends AbstractTableGateway
                 $column => "name"
             ], Join::JOIN_LEFT);
         }
+        
         $select->join($productsTableGateway->table, "{$productsCombinationTableGateway->table}.products_id={$productsTableGateway->table}.id", [
             'model',
             'alias'
         ]);
-
+        /*
         $select->join($productsDiscountTableGateway->table, "{$this->table}.products_combination_id={$productsDiscountTableGateway->table}.products_combination_id", [
             "discount",
             "discount_unit",
             "start_date",
             "end_date"
         ], Join::JOIN_LEFT);
-
+        */
+        
+        
         $where = new Where();
         $where->isNull("{$productsTableGateway->table}.deleted_at");
         $where->equalTo("{$this->table}.guest_serial", $guest_serial);
@@ -201,26 +203,45 @@ class CartTableGateway extends AbstractTableGateway
         $result = $this->selectWith($select)->toArray();
         $total = 0;
         $digitsAfterTheDecimalPoint = $request->getAttribute('digitsAfterTheDecimalPoint', 0);
-        $toDayTime = strtotime("today");
+        //$toDayTime = strtotime("today");
         $assetsTableGateway = new AssetsTableGateway($this->adapter);
+        $discountGroupHasProductsTableGateway = new DiscountGroupHasProductsTableGateway($this->adapter);
+        $discountGroupTableGateway = new DiscountGroupTableGateway($this->adapter);
+        //DB::mysqlSafeUpdateFix();
         foreach ($result as $key => $cartItem) {
-            if ($cartItem["discount"] > 0) {
-                $startTimeStamp = strtotime($cartItem["start_date"]);
-                $endTimeStamp = strtotime($cartItem["end_date"]);
-                if ($startTimeStamp <= $toDayTime && $endTimeStamp >= $toDayTime) {
-                    if ($cartItem["discount_unit"] == "percent") {
-                        $tPrice = floatval($cartItem["real_price"]) * ((100-floatval($cartItem["discount"])) / 100);
-                    } else {
-                        $tPrice= floatval($cartItem["real_price"]) - floatval($cartItem["discount"]);
+            $discountGroupHasProductsSelect = $discountGroupHasProductsTableGateway->getSql()->select()->columns(['discount_group_id']);
+            $discountGroupHasProductsSelect->where([
+                'products_id' => $cartItem['products_id'],
+                'products_combination_id' => $cartItem['products_combination_id'],
+            ]);
+            $discountGroupHasProductsResultset = $discountGroupHasProductsTableGateway->selectWith($discountGroupHasProductsSelect);
+            if ($discountGroupHasProductsResultset->count() > 0) {
+                $discount_price = [];
+                foreach ($discountGroupHasProductsResultset as $item) {
+                    $where = new Where();
+                    $where->isNull('deleted_at');
+                    $where->equalTo('id', $item->discount_group_id);
+                    $where->lessThan('start_stamp', date("Y-m-d H:i:s"));
+                    $where->greaterThan('end_stamp', date("Y-m-d H:i:s"));
+                    $discountGroupResultset = $discountGroupTableGateway->select($where);
+                    foreach ($discountGroupResultset as $key => $discountGroupRow) {
+                        $discount = floatval($discountGroupRow->discount);
+                        $realPrice = floatval($cartItem["real_price"]);
+                        if ($discountGroupRow->discount_unit == "percent") {
+                            $t = $realPrice * (100 - $discount) / 100;
+                            $discount_price[] = floatval(number_format($t, 2, '.', ''));
+                        }
+                        if ($discountGroupRow->discount_unit == "yen") {
+                            $t = $realPrice - $discount;
+                            $discount_price[] = floatval(number_format($t, 2, '.', ''));
+                        }
+                        if ($discountGroupRow->discount_unit == "fixed") {
+                            $discount_price[] = floatval(number_format($discount, 2, '.', ''));
+                        }
                     }
-                    $tPrice = round($tPrice, $digitsAfterTheDecimalPoint);
-                    $cartItem["discount_price"] = $tPrice;
-                    $cartItem["real_price"] = round($cartItem["real_price"], $digitsAfterTheDecimalPoint);
-                } else {
-                    $tPrice = round($cartItem["real_price"], $digitsAfterTheDecimalPoint);
-                    $cartItem["real_price"] = $tPrice;
-                    $cartItem["discount_price"] = 0;
                 }
+                $tPrice = min($discount_price);
+                $cartItem["real_price"] = $cartItem["discount_price"] = round(min($discount_price));
             } else {
                 $tPrice = $cartItem["real_price"];
                 $tPrice = round($tPrice, $digitsAfterTheDecimalPoint);
@@ -281,24 +302,27 @@ class CartTableGateway extends AbstractTableGateway
         $prodTotal = $tmp[1];
         $guest_serial = $tmp[2];
         $shippingFeeValue = [];
+
         // 預設的運費
         $isFreeShippingFee = count($shippingFeeValue) === 0;
         // 購物車參數
         $logisticsGlobalTableGateway = new LogisticsGlobalTableGateway($this->adapter);
         $paymentTableGateway = new PaymentTableGateway($this->adapter);
         $shippingResult = $logisticsGlobalTableGateway->getLogistics($request);
-        foreach ($shippingResult as $key => $item) {
-            $targetValue = floatval($item["target_value"]);
-            if ($prodTotal >= $targetValue) {
-                $shippingResult[$key]["price"] = 0;
-            }
-        }
+        $couponTableGateway = new CouponTableGateway($this->adapter);
+        $couponSelect = $couponTableGateway->getSql()->select()->columns(['id', 'target_value']);
+        $couponWhere = new Where();
+        $couponWhere->isNull('deleted_at');
+        $couponWhere->equalTo('use_type', 'freeshipping');
+        $couponSelect->where($couponWhere);
+        $shipfeeRow = $couponTableGateway->selectWith($couponSelect)->current();
         return [
             "cart" => $result,
             "guestSerial" => $guest_serial,
             "prodTotal" => $prodTotal,
             "shipping" => $shippingResult,
             "isFreeShippingFee" => $isFreeShippingFee,
+            "shipfeeRow" => $shipfeeRow,
             'payment' => $paymentTableGateway->getPayments($request)
         ];
     }

@@ -301,7 +301,7 @@ if (! function_exists('config') && is_file('config/config.php')) {
         } else {
             $uri = 'http://' . $server_params['SERVER_NAME'];
         }
-        $uri = preg_replace('/\/{1,}$/', '', $uri);
+        $uri = preg_replace('/(\/{1,}$)/', '', $uri);
         if ($tailSlash) {
             $uri .= '/';
         }

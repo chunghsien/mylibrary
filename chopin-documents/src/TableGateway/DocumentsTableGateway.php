@@ -133,7 +133,7 @@ class DocumentsTableGateway extends AbstractTableGateway
         $where = new Where();
         $where->equalTo("index", $routeIndex)->isNull("deleted_at");
         if ($routeIndex == "other") {
-            $methodOrId = $request->getAttribute("methodOrId");
+            $methodOrId = $request->getAttribute("methodOrId", "all");
 
             $where->equalTo("id", $methodOrId);
         }
@@ -147,7 +147,7 @@ class DocumentsTableGateway extends AbstractTableGateway
             $where = new Where();
             $where->equalTo("uri", $requestUri)->isNull("deleted_at");
             $layoutZonesRow = $layoutZonesTableGateway->select($where)->current();
-            $methodOrId = $request->getAttribute("methodOrId");
+            $methodOrId = $request->getAttribute("methodOrId", "all");
             if (! $layoutZonesRow) {
                 $where = new Where();
                 $requestUri2 = preg_replace('/\/api\/site/', '', $requestUri);
@@ -458,7 +458,7 @@ class DocumentsTableGateway extends AbstractTableGateway
                             $npClassTableGateway = new NpClassTableGateway($this->adapter);
                             $mpClassHasNpClassTableGateway = new MpClassHasNpClassTableGateway($this->adapter);
                             $fpClassHasMpClassTableGateway = new FpClassHasMpClassTableGateway($this->adapter);
-                            if (preg_match('/\d+/', $methodOrId)) {
+                            if (preg_match('/^\d+$/', $methodOrId)) {
                                 $where = new Where();
                                 $where->isNull("deleted_at");
                                 $where->equalTo("id", $methodOrId);

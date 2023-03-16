@@ -28,7 +28,7 @@ use function PHPUnit\Framework\throwException;
 
 /**
  * @deprecated
- * @author hsien
+ * @author User
  *
  */
 class EcpayShipment extends AbstractPayment

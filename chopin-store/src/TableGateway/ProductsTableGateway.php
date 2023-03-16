@@ -171,7 +171,7 @@ class ProductsTableGateway extends AbstractTableGateway
         $matchedParams = $routeResult->getMatchedParams();
         $productsWhereIn = [];
         if ($routeResult->getMatchedRouteName() == "category" || (isset($matchedParams["action"]) && $matchedParams["action"] == 'category')) {
-            $methodOrId = $request->getAttribute("methodOrId");
+            $methodOrId = $request->getAttribute("methodOrId", 'all');
             $categoryId = null;
             if (preg_match("/^fp_class\-/", $methodOrId)) {
                 $tmp = explode("-", $methodOrId);
