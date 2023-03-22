@@ -5,6 +5,7 @@ namespace Chopin\Store\TableGateway;
 use Chopin\LaminasDb\TableGateway\AbstractTableGateway;
 use Laminas\Db\Sql\Where;
 use Psr\Http\Message\ServerRequestInterface;
+use Laminas\Db\RowGateway\RowGatewayInterface;
 
 class PaymentTableGateway extends AbstractTableGateway
 {
@@ -36,5 +37,19 @@ class PaymentTableGateway extends AbstractTableGateway
         $resultSet = $this->select($where);
         $result = $resultSet->toArray();
         return $result;
+    }
+    /**
+     * 
+     * @desc 取出結帳用的付款方式Row
+     * @param int $id
+     * @return RowGatewayInterface|null
+     */
+    public function getForCheckoutRow($id)
+    {
+        $paymentWhere = new Where();
+        $paymentWhere->equalTo("id", $id);
+        $paymentWhere->equalTo("is_use", 1);
+        $paymentWhere->isNull("deleted_at");
+        return $this->select($paymentWhere)->current();
     }
 }

@@ -2,6 +2,11 @@
 
 namespace Chopin\Store\Logistics;
 
+/**
+ * @deprecated
+ * @author User
+ *
+ */
 abstract class AbstractPayMethods implements \ArrayAccess
 {
     protected $methods = [];
