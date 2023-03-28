@@ -14,10 +14,16 @@ abstract class Log
 
     public const STREAM_POS = 'storage/logs/php_syslog_%s.log';
 
-    protected static function init()
+    protected static function init($strpos = null)
     {
         if (! self::$logger instanceof Logger) {
             $pos = sprintf(self::STREAM_POS, date("Ymd"));
+            if($strpos != null) {
+                if(!dirname($strpos)) {
+                    mkdir(dirname($strpos), 0755, true);
+                }
+                $pos = sprintf($strpos, date("Ymd"));
+            }
             self::$logger = new Logger([
                 'writers' =>[
                     [

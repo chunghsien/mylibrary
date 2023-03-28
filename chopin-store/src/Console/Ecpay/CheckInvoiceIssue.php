@@ -78,7 +78,7 @@ class CheckInvoiceIssue extends Command
                     $translationId = $orderParamsRow->merchant_trade_no;
                     $response = $linePayPayment->checkPaymentApi($translationId);
                     if (isset($response["returnCode"]) && $response["returnCode"] != "0123") {
-                        $index = array_search("order_paid fail", $orderTableGateway->reverse_status, true) ;
+                        $index = array_search("order_paid_fail", $orderTableGateway->reverse_status, true) ;
                         $orderTableGateway->update([
                             "status" => -$index,
                         ], ["id" => $orderId]);

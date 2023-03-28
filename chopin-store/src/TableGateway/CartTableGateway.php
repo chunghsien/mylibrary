@@ -291,8 +291,7 @@ class CartTableGateway extends AbstractTableGateway
     /**
      *
      * @param ServerRequestInterface $request
-     * @param boolean $assets
-     *            #最後計算值的時候不需要用到
+     * @param boolean $assets 最後計算值的時候不需要用到
      * @return mixed[]
      */
     public function getCart(ServerRequestInterface $request, $isAssets = true)

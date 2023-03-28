@@ -56,7 +56,41 @@ class OrderTableGateway extends AbstractTableGateway
     protected $aes_key = '';
 
     protected $subSelectColumns = [];
-
+    
+    
+    protected $status_mapper = [
+        "order_no_status" => 0, // 訂單建立
+        "order_paid" => 1, // 付款完成(信用卡或相關綁定支付)
+        "simulate_paid" => 2, // 模擬付款成功
+        "stock_up" => 3, // 備貨中(完成對帳狀態，避免重複對帳造成)
+        "other_ship_stock_up" => 4, // 大型貨物備貨(無法使用超商取貨或一般材積總和150cm以上的宅配寄送商品)
+        "other_ship_refrigeration_stock_up" => 5, // 大型冷藏貨物備貨(無法使用超商取貨或一般材積總和120cm以上)
+        "other_ship_freezer_stock_up" => 6, // 大型冷凍貨物備貨(無法使用超商取貨或一般材積總和120cm以上)
+        "goods_sent_out" => 7, // 貨品已寄出
+        // "goods_sent_out_and_unpaid", // 貨品已寄出(尚未付款)，僅適用超商取貨付款
+        "unexpected_situation" => 8, // 其他意外狀況
+        "delivered_to_store" => 9, // 已到店，僅適用超商取貨或超商取貨付款
+        "delivered_to_house" => 10, // 已到貨，交付管理室或轉至在地物流中心。
+        "received_and_paid" => 11, // 完成領收且完成付款(僅適用於超商取貨付款,貨到付款)
+        "received" => 12, // 完成領收
+        "transaction_complete" => 13, // 交易完成（網路鑑賞期7+3後轉換狀態）
+        "order_paid_fail" => -1, //付款程序失敗
+        "unable_to_ship" => -2, // 無法寄送
+        "cancel_appication" => -3, // 訂單取消申請
+        "cancel_agree" => -4, // 訂單取消同意
+        "cancel_not_agree" => -5, // 訂單取消不同意
+        "cancel_complete" => -6, // 訂單取消完成
+        "order_reverse_application" => -7, // 退貨申請
+        "order_reverse_agree" => -8, // 退貨同意
+        "order_reverse_not_agree" => -9, // 退貨不同意
+        "order_reverse_picup" => -10, // 逆物流已取貨
+        "order_reverse_delivered" => -11, // 退貨店家已收到
+        "order_reverse_complete" => -12, // 完成退貨
+        "third_party_pay_process_fail" => -13, // 第三方金流處理錯誤
+        'cancel_the_deal' => -15 // 取消交易(含退款)
+        
+    ];
+    
     /**
      * *訂單正流程
      *
@@ -66,20 +100,21 @@ class OrderTableGateway extends AbstractTableGateway
         "order_no_status", // 訂單建立
         "order_paid", // 付款完成(信用卡或相關綁定支付)
         "simulate_paid", // 模擬付款成功
-                          // "credit_account_paid", // 付款完成(信用卡或相關綁定支付)
-                          // "transfer_account_paid", // 轉帳付款完成(ATM轉帳相關)
+        // "credit_account_paid", // 付款完成(信用卡或相關綁定支付)
+        // "transfer_account_paid", // 轉帳付款完成(ATM轉帳相關)
         "stock_up", // 備貨中(完成對帳狀態，避免重複對帳造成)
         "other_ship_stock_up", // 大型貨物備貨(無法使用超商取貨或一般材積總和150cm以上的宅配寄送商品)
         "other_ship_refrigeration_stock_up", // 大型冷藏貨物備貨(無法使用超商取貨或一般材積總和120cm以上)
         "other_ship_freezer_stock_up", // 大型冷凍貨物備貨(無法使用超商取貨或一般材積總和120cm以上)
         "goods_sent_out", // 貨品已寄出
-                           // "goods_sent_out_and_unpaid", // 貨品已寄出(尚未付款)，僅適用超商取貨付款
+        // "goods_sent_out_and_unpaid", // 貨品已寄出(尚未付款)，僅適用超商取貨付款
         "unexpected_situation", // 其他意外狀況
         "delivered_to_store", // 已到店，僅適用超商取貨或超商取貨付款
         "delivered_to_house", // 已到貨，交付管理室或轉至在地物流中心。
         "received_and_paid", // 完成領收且完成付款(僅適用於超商取貨付款,貨到付款)
         "received", // 完成領收
         "transaction_complete" // 交易完成（網路鑑賞期7+3後轉換狀態）
+            
     ];
 
     public function __get($property)
@@ -101,7 +136,7 @@ class OrderTableGateway extends AbstractTableGateway
      */
     protected $reverse_status = [
         "order_reverse_status_processing",
-        "order_paid fail",
+        "order_paid_fail",
         "unable_to_ship", // 無法寄送
         "cancel_appication", // 訂單取消申請
         "cancel_agree", // 訂單取消同意
@@ -183,9 +218,7 @@ class OrderTableGateway extends AbstractTableGateway
         $select = new Select();
         $select = $select->from([
             $this->getDecryptTable() => $subSelect
-        ])->where([
-            'id' => $id
-        ]);
+        ])->where(['id' => $id]);
         $dataSource = $this->sql->prepareStatementForSqlObject($select)->execute();
         $resultSet = new ResultSet();
         $resultSet->initialize($dataSource);

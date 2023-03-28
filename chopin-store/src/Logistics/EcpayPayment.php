@@ -932,7 +932,7 @@ class EcpayPayment extends AbstractPayment
         if (isset($response["TradeStatus"]) && $response["TradeStatus"] == '10200095') {
             // 消費者未完成付款作業，交易失敗。
             $set = [
-                "status" => array_search('order_paid fail', $orderTableGateway->reverse_status, true)
+                "status" => array_search('order_paid_fail', $orderTableGateway->reverse_status, true)
             ];
             $orderTableGateway->update($set, $where);
         }

@@ -543,9 +543,9 @@ if (! function_exists('config') && is_file('config/config.php')) {
      *
      * @return \Laminas\Log\Logger
      */
-    function logger()
+    function logger($strpos = null)
     {
-        return Log::log();
+        return Log::log($strpos = null);
     }
 
     function loggerException($e)

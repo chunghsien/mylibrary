@@ -37,7 +37,7 @@ return [
     "order_no_status" => "訂單建立(未付款)",
     "order_paid" => "完成付款",
     "simulate_paid" => "模擬付款成功",
-    "order_paid fail" => "付款程序失敗",
+    "order_paid_fail" => "付款程序失敗",
     "stock_up" => "備貨中",
     "goods_sent_out" => "貨品已寄出",
     "goods_sent_out_and_unpaid" => "貨品已寄出(尚未付款)",
