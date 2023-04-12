@@ -8,43 +8,44 @@ use Ecpay\Sdk\Factories\Factory;
 use Ecpay\Sdk\Response\VerifiedArrayResponse;
 use Psr\Http\Message\ServerRequestInterface;
 use Laminas\Diactoros\Response\TextResponse;
-use Chopin\Support\Log;
 use Chopin\Store\TableGateway\OrderTableGateway;
-use  Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ResponseInterface;
 use Chopin\Store\TableGateway\CartTableGateway;
 use Chopin\Store\TableGateway\OrderParamsTableGateway;
 
-class EcpayAllInOneCredit extends AbstractPayment
+class EcpayAllInOneWebATM extends AbstractPayment
 {
 
-    const CODE = 'EcpayAllInOneCredit';
+    const CODE = 'EcpayAllInOneWebATM';
 
     /**
-     * 
+     *
      * @var Factory
      */
     protected $factory;
-    
+
     protected $config;
-    
-    protected function initFactory() {
-        if(!$this->factory instanceof Factory) {
+
+    protected function initFactory()
+    {
+        if (! $this->factory instanceof Factory) {
             $config = config('third_party_service.logistics.ecpayAllInOne.payment');
             $this->config = $config;
             $this->factory = new Factory([
                 'hashKey' => $config['hashKey'],
                 'hashIv' => $config['hashIv']
             ]);
-            
         }
     }
-    
-    public function processResponse(ServerRequestInterface $request):ResponseInterface {
+
+    public function processResponse(ServerRequestInterface $request): ResponseInterface
+    {
         $this->initFactory();
         $factory = $this->factory;
         $paychecked = false;
         $orderParamsTableGateway = new OrderParamsTableGateway($this->adapter);
-        if(strtolower($request->getMethod()) == 'post') {
+        $orderTableGateway = new OrderTableGateway($this->adapter);
+        if (strtolower($request->getMethod()) == 'post') {
             $post = $request->getParsedBody();
             /**
              *
@@ -52,10 +53,13 @@ class EcpayAllInOneCredit extends AbstractPayment
              */
             $checkoutResponse = $factory->create(VerifiedArrayResponse::class);
             $parsed = $checkoutResponse->get($post);
-            if(intval($parsed['RtnCode']) == 1) {
+            logger('./storage/logs/ecpay_atm_%s.log')->info("Notify: " . json_encode($parsed, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            // ATM 回傳值時為2時，交易狀態為取號成功，其餘為失敗。
+            if (intval($parsed['RtnCode']) == 2) {
                 $orderSerial = $parsed['MerchantTradeNo'];
-                $orderTableGateway = new OrderTableGateway($this->adapter);
-                $orderRow = $orderTableGateway->select(['serial' => $orderSerial])->current();
+                $orderRow = $orderTableGateway->select([
+                    'serial' => $orderSerial
+                ])->current();
                 $orderParamsRow = $orderParamsTableGateway->select(['order_id' => $orderRow->id,  'name' => 'post_params'])->current();
                 if($orderParamsRow) {
                     $orderParamsRow = $orderParamsTableGateway->deCryptData($orderParamsRow);
@@ -63,63 +67,77 @@ class EcpayAllInOneCredit extends AbstractPayment
                     $comParams['payment_response'] = $parsed;
                     $orderParamsTableGateway->update(['com_params' => json_encode($comParams)], ['id' => $orderParamsRow->id]);
                 }
-                $paychecked = true;
-                $paychecked_at = isset($parsed['PaymentDate']) ? $parsed['PaymentDate'] : date("Y-m-d H:i:s");
-                logger('./storage/logs/ecpay_credit_%s.log')->info('Notify: '.json_encode($parsed, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
-                
             }
         }
-        if(strtolower($request->getMethod()) == 'get') {
+        if (strtolower($request->getMethod()) == 'get') {
             $queryParams = $request->getQueryParams();
             $order_id = $queryParams['order_id'];
             $orderTableGateway = new OrderTableGateway($this->adapter);
-            $orderRow = $orderTableGateway->select(['id' => $order_id])->current();
-            if($orderRow && $orderRow->status == 0) {
-                $config = $this->config;
-                $input = [
-                    'MerchantID' => $config['merchantID'],
-                    'MerchantTradeNo' => $orderRow->serial,
-                    'TimeStamp' => time(),
-                ];
-                $factory = $this->factory;
-                $postService = $factory->create('PostWithCmvVerifiedEncodedStrResponseService');
-                $actionUrl = $config['queryTradeInfoUri'];
-                $response = $postService->post($input, $actionUrl);
-                logger('./storage/logs/ecpay_credit_%s.log')->info("queryTradeInfo: ".json_encode($response, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
-                $orderParamsRow = $orderParamsTableGateway->select(['order_id' => $orderRow->id,  'name' => 'post_params'])->current();
-                if($orderParamsRow) {
-                    $orderParamsRow = $orderParamsTableGateway->deCryptData($orderParamsRow);
-                    $comParams = (array)$orderParamsRow->com_params;
-                    $comParams['payment_response'] = $response;
-                    $orderParamsTableGateway->update(['com_params' => json_encode($comParams)], ['id' => $orderParamsRow->id]);
-                }
+            $orderRow = $orderTableGateway->select([
+                'id' => $order_id
+            ])->current();
+        }
+        if ($orderRow && $orderRow->status == 0) {
+            $config = $this->config;
+            $input = [
+                'MerchantID' => $config['merchantID'],
+                'MerchantTradeNo' => $orderRow->serial,
+                'TimeStamp' => time()
+            ];
+            $factory = $this->factory;
+            $postService = $factory->create('PostWithCmvVerifiedEncodedStrResponseService');
+            // 先取出交易資訊(銀行代碼BankCode、付款截止時間ExpireDate、付款金額TradeAmt、付款帳號vAccount)
+            $actionUrl = $config['queryPaymentInfoUri'];
+            $response = $postService->post($input, $actionUrl);
+            $orderParamsRow = $orderParamsTableGateway->select(['order_id' => $orderRow->id,  'name' => 'post_params'])->current();
+            if(!$orderParamsRow) {
+                $orderParamsTableGateway->insert([
+                    'order_id' => $orderRow->id,
+                    'name' => 'post_params',
+                    'com_params' => json_encode([]),
+                ]);
+                $orderParamsRow = $orderParamsTableGateway->select(['id' => $orderParamsTableGateway->getLastInsertValue()])->current();
+            }
+            $comParams['payment_response'] = $response;
+            $orderParamsRow = $orderParamsTableGateway->deCryptData($orderParamsRow);
+            if (intval($response['RtnCode']) == 2) {
                 
-                if(intval($response['TradeStatus']) == 1) {
-                    $paychecked = true;
-                    $paychecked_at = $response['PaymentDate'];
+                if (strtolower($request->getMethod()) == 'get') {
                     /**
                      *
                      * @var \Mezzio\Session\LazySession $session
                      */
                     $session = $request->getAttribute('session');
-                    if($session->has('member')) {
+                    if ($session->has('member')) {
                         $cartTableGateway = new CartTableGateway($this->adapter);
                         $sessionMember = $session->get('member');
-                        $cartTableGateway->delete(['member_id' => $sessionMember['id']]);
+                        $cartTableGateway->delete([ 'member_id' => $sessionMember['id']]);
                     }
                 }
+                $actionUrl = $config['queryTradeInfoUri'];
+                $response = $postService->post($input, $actionUrl);
+                //$paymentResponse = isset($comParams['payment_response']) ? $comParams['payment_response'] : [];
+                $comParams['payment_result'] = $response;
+                if (intval($response['TradeStatus']) == 1) {
+                    $paychecked = true;
+                    $paychecked_at = $response['PaymentDate'];
+                }
+                $orderParamsTableGateway->update(['com_params' => json_encode($comParams)], ['id' => $orderParamsRow->id]);
             }
         }
-        if($paychecked) {
+
+        if ($paychecked) {
             $status = $orderTableGateway->status_mapper['order_paid'];
-            if(empty($paychecked_at)) {
+            if (empty($paychecked_at)) {
                 $paychecked_at = date("Y-m-d H:i:s");
             }
             $set = [
                 'status' => $status,
                 'paychecked_at' => $paychecked_at
             ];
-            $orderTableGateway->update($set, ['id' => $orderRow->id]);
+            $orderTableGateway->update($set, [
+                'id' => $orderRow->id
+            ]);
         }
         return new TextResponse('1|OK');
     }
@@ -131,61 +149,9 @@ class EcpayAllInOneCredit extends AbstractPayment
      */
     public function requestRefundApi(ServerRequestInterface $request): array
     {
-        if(isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] == 'development') {
-            return [
-                'status' => true,
-                'msg' => '刷退成功',
-            ];
-        }
-        
-        $this->initFactory();
-        $factory = $this->factory;
-        $config = $this->config;
-        $actionUrl = $config['creditDetailDoActionUri'];
-        $postService = $factory->create('PostWithCmvVerifiedEncodedStrResponseService');
-        $post = $request->getParsedBody();
-        if(!$post) {
-            $post = json_decode($request->getBody()->getContents());
-        }
-        $order_id = $post['order_id'];
-        $orderTableGateway = new OrderTableGateway($this->adapter);
-        $orderRow = $orderTableGateway->select([ 'id' => $order_id ])->current();
-        if(!$order_id){
-            throw new \ErrorException('order_refund_apply_fail');
-        }
-        $config = $this->config;
-        $input = [
-            'MerchantID' => $config['merchantID'],
-            'MerchantTradeNo' => $orderRow->serial,
-                'TimeStamp' => time(),
-            ];
-        
-        $factory = $this->factory;
-        $postService = $factory->create('PostWithCmvVerifiedEncodedStrResponseService');
-        $actionUrl = $config['queryTradeInfoUri'];
-        $response = $postService->post($input, $actionUrl);
-        if(empty($response['TradeNo'])) {
-            throw new \ErrorException('order_refund_apply_fail');
-        }
-        $totalAmount = intval($orderRow->total);
-        if(isset($post['refund_amount'])) {
-            $totalAmount = intval($post['refund_amount']);
-        }
-        $input = [
-            'MerchantID' => $config['merchantID'],
-            'MerchantTradeNo' => $orderRow->serial,
-            'TradeNo' => $response['TradeNo'],
-            'Action' => 'R',
-            'TotalAmount' => $totalAmount,
-        ];
-        $response = $postService->post($input, $actionUrl);
-        $response['status'] = true; 
-        if(intval($response['RtnCode ']) == 1) {
-            $response['status'] = false; 
-        }
-        $response['msg'] = $response['RtnMsg']; 
-        return $response;
+        return [];
     }
+
     /**
      *
      * {@inheritdoc}
@@ -197,13 +163,13 @@ class EcpayAllInOneCredit extends AbstractPayment
         $factory = $this->factory;
         $config = $this->config;
         /**
-         * 
+         *
          * @var HtmlService $htmlService
          */
         $htmlService = $factory->create(HtmlService::class);
 
         /**
-         * 
+         *
          * @var CheckMacValueRequest $checkMacValueRequest
          */
         $checkMacValueRequest = $factory->create(CheckMacValueRequest::class);
@@ -242,8 +208,8 @@ class EcpayAllInOneCredit extends AbstractPayment
             $itemName = mb_substr($itemName, 0, 397, 'utf-8');
             $itemName .= '...';
         }
-        $tradeDesc = $orderSet['serial'] . "綠界刷卡";
-        
+        $tradeDesc = $orderSet['serial'] . "綠界ATM";
+
         $lang = '';
         if (config('is_multiple_language')) {
             $lang = $this->request->getAttribute('html_lang');
@@ -251,12 +217,12 @@ class EcpayAllInOneCredit extends AbstractPayment
         $code = lcfirst(self::CODE);
         $returnURL = "/{$lang}/third-party-pay-notify/{$code}";
         $returnURL = preg_replace('/\/\//', '/', $returnURL);
-        $returnURL  = siteBaseUrl().$returnURL;
+        $returnURL = siteBaseUrl() . $returnURL;
         $orderId = $orderSet['id'];
-        
+
         $clientBackURL = "/{$lang}/my-account?order_id={$orderId}&code={$code}";
         $clientBackURL = preg_replace('/\/\//', '/', $clientBackURL);
-        $clientBackURL  = siteBaseUrl().$clientBackURL;
+        $clientBackURL = siteBaseUrl() . $clientBackURL;
         $input = [
             'MerchantID' => $config['merchantID'],
             'MerchantTradeNo' => $orderSet['serial'],
@@ -265,14 +231,19 @@ class EcpayAllInOneCredit extends AbstractPayment
             'TotalAmount' => intval($orderSet['total']),
             'TradeDesc' => UrlService::ecpayUrlEncode($tradeDesc),
             'ItemName' => $itemName,
-            'ChoosePayment' => 'Credit',
+            'ChoosePayment' => 'WebATM',
             'EncryptType' => 1,
             'ReturnURL' => $returnURL,
             'ClientBackURL' => $clientBackURL
-            //'OrderResultURL ' => $orderResultURL
+            // 'OrderResultURL ' => $orderResultURL
         ];
+        /*
+         * if($_ENV['APP_ENV'] != 'production') {
+         * $input['']
+         * }
+         */
         $requestInput = $checkMacValueRequest->toArray($input);
-        logger('./storage/logs/ecpay_allin_one/credit_%s.log')->info('Request: ' . json_encode($input, JSON_UNESCAPED_UNICODE));
+        logger('./storage/logs/ecpay_allin_one/atm_%s.log')->info('Request: ' . json_encode($input, JSON_UNESCAPED_UNICODE));
         $form_id = 'EcpayAllInOneCreditForm';
         $content = $htmlService->form($requestInput, $action, '_self', $form_id, 'ecpay-button');
         $message = 'immediately_to_ecpay_all_in_one';

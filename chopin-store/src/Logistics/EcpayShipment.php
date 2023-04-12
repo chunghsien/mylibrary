@@ -211,7 +211,7 @@ class EcpayShipment extends AbstractPayment
                     $orderParamsTableGateway->insert([
                         "order_id" => $orderData["id"],
                         "name" => "invoice_query",
-                        "csvcom_params" => $csvcom
+                        "com_params" => $csvcom
                     ]);
                     $set = [];
                     if (! $orderData["invoice_no"]) {
@@ -241,7 +241,7 @@ class EcpayShipment extends AbstractPayment
                     if ($orderParamsRow) {
                         $memberTableGateway = new MemberTableGateway($this->adapter);
                         $member = $memberTableGateway->getMember($orderData["member_id"]);
-                        $csvcom = json_decode($orderParamsRow->csvcom_params, true);
+                        $csvcom = json_decode($orderParamsRow->com_params, true);
                         $data = [
                             'MerchantID' => $merchantID,
                             "RelateNumber" => $relateNumber,
@@ -368,7 +368,7 @@ class EcpayShipment extends AbstractPayment
                             $orderParamsTableGateway->insert([
                                 "order_id" => $orderData["id"],
                                 "name" => "invoice_create",
-                                "csvcom_params" => $csvcom
+                                "com_params" => $csvcom
                             ]);
                             $set = [
                                 "invoice_no" => $response["Data"]["InvoiceNo"],
@@ -537,7 +537,7 @@ class EcpayShipment extends AbstractPayment
                 "order_id" => $orderData["id"],
                 "name" => "cvs_is_collection_y",
                 "merchant_trade_no" => $response["MerchantTradeNo"],
-                "csvcom_params" => json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                "com_params" => json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             ]);
             return [
                 "status" => "success",
@@ -628,7 +628,7 @@ class EcpayShipment extends AbstractPayment
                 "order_id" => $orderData["id"],
                 "name" => "cvs_is_collection_y",
                 "merchant_trade_no" => $response["MerchantTradeNo"],
-                "csvcom_params" => json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                "com_params" => json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             ]);
             return [
                 "status" => "success",

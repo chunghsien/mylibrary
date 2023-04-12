@@ -70,7 +70,7 @@ class InvoiceInvalid extends Command
             $row = $orderTableGateway->deCryptData($row);
             $orderParamsRow = $orderParamsTableGateway->select(["order_id" => $row->id, "name" => "invoice_create"])->current();
             if ($orderParamsRow) {
-                $csvcomParams = json_decode($orderParamsRow->csvcom_params);
+                $csvcomParams = json_decode($orderParamsRow->com_params);
                 $invoiceDate = date("Y-m-d", strtotime($csvcomParams->Data->InvoiceDate));
                 $data = [
                     'MerchantID' => $config["merchantID"],
@@ -93,7 +93,7 @@ class InvoiceInvalid extends Command
                     $orderParamsTableGateway->insert([
                         "order_id" => $row->id,
                         "name" => "invoice_invalid",
-                        "csvcom_params" => json_encode($response, JSON_UNESCAPED_UNICODE),
+                        "com_params" => json_encode($response, JSON_UNESCAPED_UNICODE),
                     ]);
                     $orderTableGateway->update([
                         "invoice_invalid" => 1

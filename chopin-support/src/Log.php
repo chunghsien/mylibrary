@@ -12,12 +12,12 @@ abstract class Log
      */
     private static $logger;
 
-    public const STREAM_POS = 'storage/logs/php_syslog_%s.log';
+    public static $stream_pos = 'storage/logs/php_syslog_%s.log';
 
     protected static function init($strpos = null)
     {
         if (! self::$logger instanceof Logger) {
-            $pos = sprintf(self::STREAM_POS, date("Ymd"));
+            $pos = sprintf(self::$stream_pos, date("Ymd"));
             if($strpos != null) {
                 if(!dirname($strpos)) {
                     mkdir(dirname($strpos), 0755, true);
@@ -39,9 +39,9 @@ abstract class Log
         }
     }
 
-    public static function log()
+    public static function log($strpos = null)
     {
-        self::init();
+        self::init($strpos);
         return self::$logger;
     }
 

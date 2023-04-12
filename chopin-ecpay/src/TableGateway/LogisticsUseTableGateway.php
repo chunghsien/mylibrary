@@ -4,6 +4,11 @@ namespace Chopin\Ecpay\TableGateway;
 
 use Chopin\LaminasDb\TableGateway\AbstractTableGateway;
 
+/**
+ * @deprecated
+ * @author User
+ *
+ */
 class LogisticsUseTableGateway extends AbstractTableGateway
 {
     public static $isRemoveRowGatewayFeature = false;

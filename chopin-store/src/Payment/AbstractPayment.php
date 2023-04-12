@@ -13,6 +13,8 @@ use Chopin\Store\TableGateway\OrderTableGateway;
 use Chopin\Support\Registry;
 use Chopin\Users\TableGateway\MemberTableGateway;
 use Chopin\Support\TwigMail;
+use Laminas\I18n\Translator\Translator;
+use  Psr\Http\Message\ResponseInterface;
 
 abstract class AbstractPayment
 {
@@ -28,12 +30,6 @@ abstract class AbstractPayment
      * @var ServerRequestInterface
      */
     protected $request;
-    
-    /**
-     *
-     * @var string
-     */
-    protected $content;
 
     public function __construct(Adapter $adapter, ServerRequestInterface $request)
     {
@@ -41,7 +37,15 @@ abstract class AbstractPayment
         $this->request = $request;
     }
 
-    public function requestApi(array$orderCommonParams): array
+    abstract public function processResponse(ServerRequestInterface $request):ResponseInterface;
+    abstract public function requestRefundApi(ServerRequestInterface $request): array;
+    /**
+     * 
+     * @param array $orderCommonParams
+     * @param Translator $translator
+     * @return array
+     */
+    public function requestApi(array $orderCommonParams, $translator = null): array
     {
         //$this->sendMail($orderCommonParams);
         return [
@@ -62,7 +66,7 @@ abstract class AbstractPayment
         $paymentRow = $orderCommonParams['paymentRow'];
         $logisticsGlobalRow = $orderCommonParams['logisticsGlobalRow'];
         $member = (array) $memberTableGateway->getMember($orderSet['member_id']);
-        $csvcomParams = isset($orderCommonParams['csvcom_params']) ? $orderCommonParams['csvcom_params'] : [];
+        $comParams = isset($orderCommonParams['com_params']) ? $orderCommonParams['com_params'] : [];
         $digitsAfterTheDecimalPoint = $orderCommonParams['digitsAfterTheDecimalPoint'];
         $varBaseUrl = $orderCommonParams['baseUrl'];
         $serverParams = $request->getServerParams();
@@ -86,7 +90,7 @@ abstract class AbstractPayment
             "baseUrl" => $varBaseUrl,
             "digitsAfterTheDecimalPoint" => $digitsAfterTheDecimalPoint,
             "logistics_name" => $logisticsGlobalRow->name,
-            "postParams" => $csvcomParams
+            "postParams" => $comParams
         ];
         $phpLang = $request->getAttribute('php_lang');
         TwigMail::sendOrderedMail($request, [
@@ -241,9 +245,16 @@ abstract class AbstractPayment
                 }
             }
         }
+        $comParams = [];
+        if(isset($post['cvs_store_params'])) {
+            if(is_string($post['cvs_store_params'])) {
+                $post['cvs_store_params'] = json_decode($post['cvs_store_params'], true);
+            }
+            $comParams['cvs_store_params'] = $post['cvs_store_params'];
+        }
         return [
             'order' => $orderSet,
-            'csvcom_params' => isset($post['csv_store_params']) ? $post['csv_store_params'] : null,
+            'com_params' => $comParams,
             'dicsountDetail' => $dicsountDetail,
             'carts' => $baseCart[0],
             'logisticsGlobalRow' => $logisticsGlobalRow,

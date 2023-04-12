@@ -551,7 +551,7 @@ class LinePayPayment extends AbstractPayment
                 "order_id" => $row->id,
                 "name" => "linepay_success",
                 //"merchant_trade_no" => $response["info"]["transactionId"],
-                "csvcom_params" => json_encode($response, JSON_UNESCAPED_UNICODE),
+                "com_params" => json_encode($response, JSON_UNESCAPED_UNICODE),
             ]);
         }
         return $response;

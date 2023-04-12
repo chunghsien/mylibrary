@@ -22,12 +22,12 @@ abstract class PaymentFactory
             $class = "Chopin\\Store\\Payment\\".ucfirst($code);
             if(class_exists($class)) {
                 $reflection = new \ReflectionClass($class);
-                return $reflection->newInstance($adapter);
+                return $reflection->newInstance($adapter, $request);
             }else{
                 $class = "Chopin\\Store\\Payment\\NotMatchPayment";
                 if(class_exists($class)) {
                     $reflection = new \ReflectionClass($class);
-                    return $reflection->newInstance($adapter);
+                    return $reflection->newInstance($adapter, $request);
                 }else{
                     throw new \ErrorException('無對應的類別');
                 }

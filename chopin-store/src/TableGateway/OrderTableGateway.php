@@ -13,6 +13,7 @@ use Laminas\I18n\Translator\TranslatorInterface;
 use Laminas\Db\Sql\Select;
 use Laminas\Db\ResultSet\ResultSet;
 use Chopin\Store\Logistics\AbstractPayment;
+use Chopin\LaminasDb\DB;
 
 class OrderTableGateway extends AbstractTableGateway
 {
@@ -58,7 +59,7 @@ class OrderTableGateway extends AbstractTableGateway
     protected $subSelectColumns = [];
     
     
-    protected $status_mapper = [
+    public $status_mapper = [
         "order_no_status" => 0, // 訂單建立
         "order_paid" => 1, // 付款完成(信用卡或相關綁定支付)
         "simulate_paid" => 2, // 模擬付款成功
@@ -130,11 +131,11 @@ class OrderTableGateway extends AbstractTableGateway
     }
 
     /**
-     * *訂單逆流程(退貨，先不設計換貨，一律先退貨再重新購買)，資料表狀態是顯示負數
      *
      * @var array
      */
     protected $reverse_status = [
+        null,
         "order_reverse_status_processing",
         "order_paid_fail",
         "unable_to_ship", // 無法寄送
@@ -340,7 +341,7 @@ class OrderTableGateway extends AbstractTableGateway
         if ($resultset->count() == 1) {
             $row = $resultset->current();
             $item = $row->toArray();
-            return json_decode($item["csvcom_params"], true);
+            return json_decode($item["com_params"], true);
         }
         return null;
     }
@@ -357,13 +358,14 @@ class OrderTableGateway extends AbstractTableGateway
         if ($resultset->count() > 0) {
             $row = $resultset->current();
             $item = $row->toArray();
-            return json_decode($item["csvcom_params"], true);
+            return json_decode($item["com_params"], true);
         }
         return null;
     }
 
     public function getOrderList($users_id, $lang, $getDetail = false, $limit = 0)
     {
+        DB::mysql8HigherGroupByFix();
         $translator = AbstractValidator::getDefaultTranslator();
         $subSelect = $this->decryptSubSelectRaw;
         $select = new Select();
@@ -379,11 +381,16 @@ class OrderTableGateway extends AbstractTableGateway
         $select->join($logisticsGlobalTableGateway->table, "{$logisticsGlobalTableGateway->table}.id={$decryptTable}.logistics_global_id", [
             "logistics_name" => "name",
         ]);
-
+        $logisticsUseTableGateway = new LogisticsUseTableGateway($this->adapter);
+        $select->join($logisticsUseTableGateway->table, "{$logisticsUseTableGateway->table}.order_id={$decryptTable}.id", [
+            "logistics_rtn_code" => "rtn_code",
+        ]);
+        $select->group("{$logisticsUseTableGateway->table}.id");
         if ($limit > 0) {
             $select->limit($limit);
         }
-        $select->order("id desc");
+        //$select->group($group);
+        $select->order("{$decryptTable}.id DESC, {$logisticsUseTableGateway->table}.id DESC");
         $where = new Where();
         $where->equalTo("member_id", $users_id);
         $where->isNull("{$decryptTable}.deleted_at");
@@ -420,32 +427,15 @@ class OrderTableGateway extends AbstractTableGateway
             $orderParamsSelect = $orderParamsTableGateway->getSql()->select();
             $orderParamsWhere = $orderParamsSelect->where;
             $orderParamsWhere->equalTo('order_id', $orderId);
-            $orderParamsWhere->like('name', 'cvs_is_collection%');
+            $orderParamsWhere->like('name', 'post_params');
             $orderParamsSelect->limit(1);
             $orderParamsSelect->order('id desc');
             $orderParamsSelect->where($orderParamsWhere);
-            $orderParamsCvsRow = $orderParamsTableGateway->selectWith($orderParamsSelect)->current();
-            if ($orderParamsCvsRow) {
-                $csvcom = json_decode($orderParamsCvsRow->csvcom_params, true);
-                $orderParamsSelect = $orderParamsTableGateway->getSql()->select();
-                $orderParamsWhere = $orderParamsSelect->where;
-                $orderParamsWhere->equalTo('order_id', $orderId);
-                $orderParamsWhere->equalTo('name', 'post_params');
-                $orderParamsSelect->limit(1);
-                $orderParamsSelect->order('id desc');
-                $orderParamsSelect->where($orderParamsWhere);
-                $orderParamsPostRow = $orderParamsTableGateway->selectWith($orderParamsSelect)->current();
-                if ($orderParamsPostRow) {
-                    $orderParamsCsvCom = json_decode($orderParamsPostRow->csvcom_params, true);
-                    if (empty($csvcom["LogisticsSubType"])) {
-                        $csvcom["LogisticsSubType"] = $orderParamsCsvCom["LogisticsSubType"];
-                    }
-                    if (empty($csvcom["ReceiverStoreName"])) {
-                        $csvcom["ReceiverStoreName"] = $orderParamsCsvCom["csv_store_name"];
-                    }
-                    $csvcom["orderPostParams"] = $orderParamsCsvCom;
-                }
-                $order["csvComParams"] = $csvcom;
+            $orderParamsRow = $orderParamsTableGateway->selectWith($orderParamsSelect)->current();
+            $orderParamsRow = $orderParamsTableGateway->deCryptData($orderParamsRow);
+            if ($orderParamsRow) {
+                $com_params = (array)$orderParamsRow->com_params;
+                $order["comParams"] = $com_params;
             }
             if ($logisticsServiceObj instanceof AbstractPayment) {
                 $invoiceParams = $this->withInvoiceParams($orderId);

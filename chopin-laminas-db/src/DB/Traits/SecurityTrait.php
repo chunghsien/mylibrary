@@ -39,7 +39,7 @@ trait SecurityTrait
         'full_address', // 住址
         'aes_value',
         "third_party_payment_params",
-        "csvcom_params"
+        "com_params"
     ];
 
     /**

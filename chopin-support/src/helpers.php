@@ -545,7 +545,7 @@ if (! function_exists('config') && is_file('config/config.php')) {
      */
     function logger($strpos = null)
     {
-        return Log::log($strpos = null);
+        return Log::log($strpos);
     }
 
     function loggerException($e)

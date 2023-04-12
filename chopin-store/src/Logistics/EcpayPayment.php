@@ -689,7 +689,7 @@ class EcpayPayment extends AbstractPayment
                     $orderParamsTableGateway->insert([
                         "order_id" => $orderData["id"],
                         "name" => "invoice_query",
-                        "csvcom_params" => $csvcom
+                        "com_params" => $csvcom
                     ]);
                     $set = [];
                     if (! $orderData["invoice_no"]) {
@@ -719,7 +719,7 @@ class EcpayPayment extends AbstractPayment
                     if ($orderParamsRow) {
                         $memberTableGateway = new MemberTableGateway($this->adapter);
                         $member = $memberTableGateway->getMember($orderData["member_id"]);
-                        $csvcom = json_decode($orderParamsRow->csvcom_params, true);
+                        $csvcom = json_decode($orderParamsRow->com_params, true);
                         $data = [
                             'MerchantID' => $merchantID,
                             "RelateNumber" => $relateNumber,
@@ -846,7 +846,7 @@ class EcpayPayment extends AbstractPayment
                             $orderParamsTableGateway->insert([
                                 "order_id" => $orderData["id"],
                                 "name" => "invoice_create",
-                                "csvcom_params" => $csvcom
+                                "com_params" => $csvcom
                             ]);
                             $set = [
                                 "invoice_no" => $response["Data"]["InvoiceNo"]
@@ -1040,7 +1040,7 @@ class EcpayPayment extends AbstractPayment
                 "order_id" => $orderData["id"],
                 "name" => $name,
                 "merchant_trade_no" => $response["MerchantTradeNo"],
-                "csvcom_params" => json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+                "com_params" => json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
             ]);
             // stock_up
             $index = array_search("stock_up", $this->orderTableGateway->status, true);
@@ -1338,7 +1338,7 @@ class EcpayPayment extends AbstractPayment
                     "order_id" => $orderID,
                     "name" => "post_params"
                 ])->current();
-                $csvcomParams = json_decode($orderParamsRow->csvcom_params);
+                $csvcomParams = json_decode($orderParamsRow->com_params);
                 $input["ReceiverStoreID"] = $csvcomParams->csvcomDetail->CVSStoreID;
             }
 
@@ -1349,7 +1349,7 @@ class EcpayPayment extends AbstractPayment
                     "order_id" => $orderData["id"],
                     "name" => $name,
                     "merchant_trade_no" => $response["MerchantTradeNo"],
-                    "csvcom_params" => json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+                    "com_params" => json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
                 ]);
                 $status = "stock_up";
                 $index = array_search($status, $this->orderTableGateway->status, true);

@@ -13,8 +13,6 @@ use Laminas\Db\RowGateway\RowGatewayInterface;
 use Laminas\Db\ResultSet\ResultSetInterface;
 use Laminas\Db\Sql\Select;
 use function class_exists;
-use Chopin\LanguageHasLocale\TableGateway\LanguageHasLocaleTableGateway;
-use Laminas\Validator\Translator\TranslatorInterface;
 
 class CouponTableGateway extends AbstractTableGateway
 {
@@ -413,7 +411,7 @@ class CouponTableGateway extends AbstractTableGateway
                     } else {
                         $cartParamsTableGateway->insert([
                             "guest_serial" => $guestSerial,
-                            "csvcom_params" => json_encode([
+                            "com_params" => json_encode([
                                 "coupon_code" => $couponRow->code,
                                 "coupon_price" => $couponRow->use_value
                             ], JSON_UNESCAPED_UNICODE)
@@ -422,12 +420,12 @@ class CouponTableGateway extends AbstractTableGateway
                             "guest_serial" => $guestSerial
                         ])->current();
                     }
-                    $csvcomParams = $couponParamsRow->csvcom_params ? json_decode($couponParamsRow->csvcom_params, true) : [];
+                    $csvcomParams = $couponParamsRow->com_params ? json_decode($couponParamsRow->com_params, true) : [];
                     if (! $csvcomParams) {
                         $csvcomParams = [];
                     }
                     $cartParamsTableGateway->update([
-                        "csvcom_params" => json_encode($csvcomParams, JSON_UNESCAPED_UNICODE)
+                        "com_params" => json_encode($csvcomParams, JSON_UNESCAPED_UNICODE)
                     ], [
                         "guest_serial" => $guestSerial
                     ]);
